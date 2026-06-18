@@ -1,9 +1,10 @@
-// ===== Sidequests – Cyberpunk Edition v4 =====
-// Neu: XP‑Progress‑Meter bis zum nächsten Level, Tasks sichtbar, Level oben deutlich
-// Beibehalten: Reroll 1×/Tag (3E‑3M‑2S), Filter, XP‑Only Leveling
+// ===== Sidequests – Cyberpunk Edition v5 =====
+// Neu:
+// - Deutliches Level-Feld (Level X), mit Level-Up-Animation
+// - XP werden beim Level-Up zurückgesetzt (0–100 pro Level)
+// Beibehalten: Reroll 1×/Tag mit 3E-3M-2S, Filter, Cyber-Effekte
 
-const STORAGE_KEY = "sidequests_cyber_v4";
-const DAILY_TASK_COUNT = 8;
+const STORAGE_KEY = "sidequests_cyber_v5";
 
 /* Fragen/Aufgaben Katalog mit XP-Werten */
 const QUESTS = [
@@ -66,8 +67,8 @@ function timeToHHMM(ms){
 let state = loadState();
 function defaultState(){
   return {
-    xp: 0,
-    level: 1,
+    xp: 0,          // XP innerhalb des aktuellen Levels (0–100)
+    level: 1,       // aktuelles Level (1,2,3,…)
     lastDay: todayKey(),
     resetAt: nextResetMidnight().toISOString(),
     rerolledForDay: false, // 1×/Tag-Limit
@@ -94,6 +95,7 @@ function generateDailyQuestsCategorized(){
   chosen.sort((a,b)=> w(a.diff)-w(b.diff));
   return chosen;
 }
+
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -106,7 +108,9 @@ function loadState(){
       s.quests = generateDailyQuestsCategorized();
       s.rerolledForDay = false; // neues Tageskontingent
     }
-    s.level = 1 + Math.floor((s.xp||0)/100);
+    // Safety: XP immer auf 0–100 clampen
+    s.xp = Math.max(0, Math.min(100, s.xp|0));
+    s.level = Math.max(1, s.level|0);
     return s;
   }catch(e){
     console.warn("State load error", e);
@@ -117,7 +121,8 @@ function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
 
 /* DOM refs */
 const $xp = $("#xp");
-const $level = $("#level");
+const $levelValue = $("#levelValue");
+const $levelCard = $("#levelCard");
 const $resetH = $("#resetH");
 const $resetM = $("#resetM");
 const $tasksCount = $("#tasksCount");
@@ -132,13 +137,11 @@ let currentFilter = "all";
 
 /* Render */
 function renderStatus(){
-  state.level = 1 + Math.floor(state.xp/100);
-  const xpIntoLevel = state.xp % 100;
-  const xpToNext = 100 - xpIntoLevel;
   $xp.textContent = `${state.xp} XP`;
-  $level.textContent = state.level;
-  $xpFill.style.width = `${(xpIntoLevel/100)*100}%`;
-  $nextLevelInfo.textContent = `${xpIntoLevel}/100 XP bis Level ${state.level+1}`;
+  $levelValue.textContent = state.level;
+
+  $xpFill.style.width = `${(state.xp/100)*100}%`;
+  $nextLevelInfo.textContent = `${state.xp}/100 XP bis Level ${state.level+1}`;
 
   const r = new Date(state.resetAt);
   const {h,m} = timeToHHMM(Math.max(0, r - now()));
@@ -203,9 +206,24 @@ $questList.addEventListener("click", (e)=>{
   }else if(act==="claim"){
     if(!q.done || q.claimed) return;
     q.claimed = true;
+
+    const beforeLevel = state.level;
     state.xp += q.xp;
+
+    // Level-Up Logik mit XP-Reset pro Level (100 XP pro Stufe)
+    while(state.xp >= 100){
+      state.xp -= 100;        // XP ins nächste Level "rollen"
+      state.level += 1;       // Level erhöhen
+    }
+
     celebrate();
     toast(`+${q.xp} XP`, "success");
+
+    // Level-Up Animation triggern, wenn Level gestiegen
+    if(state.level > beforeLevel){
+      triggerLevelUpAnimation();
+      toast(`Level ${state.level} erreicht!`, "success");
+    }
   }
   saveState(); renderAll();
 });
@@ -250,6 +268,15 @@ function checkReset(){
   }
 }
 setInterval(checkReset, 15_000);
+
+/* Level-Up Animation */
+function triggerLevelUpAnimation(){
+  if(!$levelCard) return;
+  $levelCard.classList.remove("level-up");
+  // reflow to restart animation
+  void $levelCard.offsetWidth;
+  $levelCard.classList.add("level-up");
+}
 
 /* Cyber Effekte: Sound, Cursor-Glow, Hover-Partikel */
 function playClick(){
