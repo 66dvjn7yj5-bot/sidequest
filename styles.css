@@ -1,4 +1,4 @@
-/* ===== Sidequests – Cyberpunk Neon Theme v5 (Level-Card + Level-Up-Anim) ===== */
+/* ===== Sidequests – Cyberpunk Neon Theme (komplette Neuauflage) ===== */
 
 :root{
   --bg: #0a0914;
@@ -13,10 +13,10 @@
   --text:#eaf0ff;
   --muted:#9aa4c7;
 
-  --neon-p:#b38aff;  /* purple */
-  --neon-c:#37f2e7;  /* cyan */
-  --neon-m:#ff6ad5;  /* magenta */
-  --neon-y:#ffd86b;  /* yellow */
+  --neon-p:#b38aff;
+  --neon-c:#37f2e7;
+  --neon-m:#ff6ad5;
+  --neon-y:#ffd86b;
 
   --shadow-2: 0 24px 70px rgba(0,0,0,.5);
 
@@ -38,7 +38,7 @@ body{
   overflow-x:hidden;
 }
 
-/* Chromatic aberration glow */
+/* Chromatic glow */
 body::after{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background: radial-gradient(600px 300px at 80% -10%, rgba(179,138,255,.12), transparent 70%),
@@ -46,7 +46,7 @@ body::after{
   mix-blend-mode: screen;
 }
 
-/* Subtle gridlines */
+/* Gridlines */
 body::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background-image:
@@ -56,7 +56,7 @@ body::before{
   mask-image: radial-gradient(60% 60% at 50% 20%, #000 40%, transparent 90%);
 }
 
-/* Scanlines overlay */
+/* Scanlines */
 .scanlines{
   position: fixed; inset:0; pointer-events:none; z-index: 0;
   background: repeating-linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,.015) 1px, transparent 3px, transparent 4px);
@@ -93,8 +93,10 @@ body::before{
     inset 0 0 0 2px rgba(255,255,255,.08);
 }
 
-/* Deutliches Level-Feld */
+/* Status */
 .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+
+/* Deutliches Level-Feld */
 .level-card{
   display:grid; grid-template-columns:auto 1fr; align-items:center; gap:10px;
   padding:10px 14px; border-radius: 14px;
