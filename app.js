@@ -1,49 +1,76 @@
-// ===== Sidequests – Cyberpunk Edition (komplette Neuauflage) =====
-// Features:
-// - Deutliches Level-Feld + Level-Up-Animation
-// - XP 0–100 pro Level, XP-Reset beim Level-Up
-// - Tägliche Fragenliste mit Done -> Claim (+XP)
-// - Reroll 1×/Tag: 3 easy, 3 medium, 2 hard (mit Fallback)
-// - Täglicher Reset um Mitternacht
+// ===== Sidequests – Cyberpunk Edition (größerer Aufgabenpool + 2× hard garantiert) =====
 
-const STORAGE_KEY = "sidequests_cyber_final_v1";
+const STORAGE_KEY = "sidequests_cyber_pool_v2";
 
-/* Fragen-/Aufgaben-Katalog */
+/* Aufgaben-Katalog – deutlich erweitert */
 const QUESTS = [
-  // Bewegung
+  // Bewegung – easy
   { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
-  { title:"30‑Sekunden Plank", cat:"Bewegung", diff:"med", time:"1 Min", xp:15 },
-  { title:"10 Liegestütze", cat:"Bewegung", diff:"med", time:"3 Min", xp:20 },
-  { title:"1 km Spaziergang", cat:"Bewegung", diff:"hard", time:"12 Min", xp:30 },
-  { title:"15 Minuten zügig laufen", cat:"Bewegung", diff:"hard", time:"15 Min", xp:30 },
+  { title:"15 Ausfallschritte (gesamt)", cat:"Bewegung", diff:"easy", time:"3 Min", xp:10 },
+  { title:"30 Sekunden Wandsitz", cat:"Bewegung", diff:"easy", time:"1 Min", xp:10 },
+  { title:"20 Jumping Jacks", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
 
-  // Achtsamkeit
+  // Bewegung – medium
+  { title:"30‑Sekunden Plank", cat:"Bewegung", diff:"med", time:"1 Min", xp:15 },
+  { title:"3×10 Sekunden Dehnen (Beine)", cat:"Bewegung", diff:"med", time:"3 Min", xp:15 },
+  { title:"15 Liegestütze (gern auf Knien)", cat:"Bewegung", diff:"med", time:"4 Min", xp:18 },
+  { title:"10 Burpees light", cat:"Bewegung", diff:"med", time:"4 Min", xp:18 },
+
+  // Bewegung – hard
+  { title:"1 km Spaziergang/Joggen", cat:"Bewegung", diff:"hard", time:"12–15 Min", xp:30 },
+  { title:"Intervall: 5×(30s schnell/30s langsam)", cat:"Bewegung", diff:"hard", time:"10 Min", xp:30 },
+  { title:"Treppen-Challenge: 10 Stockwerke gesamt", cat:"Bewegung", diff:"hard", time:"10–12 Min", xp:32 },
+  { title:"Tabata 4 Min (20/10s, 8 Runden)", cat:"Bewegung", diff:"hard", time:"4 Min", xp:28 },
+
+  // Achtsamkeit – easy
   { title:"1 Minute bewusst atmen", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
   { title:"3 Dinge notieren, die gut waren", cat:"Achtsamkeit", diff:"easy", time:"3 Min", xp:10 },
-  { title:"5 Minuten offline sein", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
+  { title:"30s Body-Scan (Kopf bis Fuß)", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
 
-  // Kreativität
+  // Achtsamkeit – medium
+  { title:"5 Minuten offline sein", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
+  { title:"2 Minuten langsame Box-Breathing", cat:"Achtsamkeit", diff:"med", time:"2 Min", xp:15 },
+  { title:"1 kurze Meditation (App/YouTube)", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
+
+  // Kreativität – easy
   { title:"Skizziere ein kleines Doodle", cat:"Kreativität", diff:"easy", time:"2 Min", xp:10 },
   { title:"Schreibe einen 2‑Zeilen‑Reim", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
-  { title:"Fotografiere etwas in Blau", cat:"Kreativität", diff:"med", time:"3 Min", xp:12 },
+  { title:"Fotografiere etwas in Blau", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
 
-  // Soziales
+  // Kreativität – medium
+  { title:"Schreibe 50 Wörter Freewriting", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
+  { title:"Skizziere 3 Logo‑Ideen in 5 Min", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
+
+  // Soziales – easy
   { title:"Schicke eine nette Nachricht", cat:"Soziales", diff:"easy", time:"3 Min", xp:10 },
   { title:"Bedanke dich bei jemandem", cat:"Soziales", diff:"easy", time:"2 Min", xp:10 },
+
+  // Soziales – medium
   { title:"Kurzes Telefonat mit Freund:in", cat:"Soziales", diff:"med", time:"5 Min", xp:18 },
+  { title:"Plane ein kurzes Treffen", cat:"Soziales", diff:"med", time:"5 Min", xp:15 },
 
-  // Ordnung
-  { title:"Räume eine kleine Fläche auf", cat:"Ordnung", diff:"med", time:"5 Min", xp:20 },
+  // Ordnung – easy
   { title:"Mülleimer leeren", cat:"Ordnung", diff:"easy", time:"2 Min", xp:8 },
+  { title:"Schreibtischfläche wischen", cat:"Ordnung", diff:"easy", time:"2 Min", xp:10 },
 
-  // Lernen
+  // Ordnung – medium
+  { title:"Räume eine kleine Fläche auf", cat:"Ordnung", diff:"med", time:"5 Min", xp:20 },
+  { title:"E‑Mail Posteingang: 10 Mails aufräumen", cat:"Ordnung", diff:"med", time:"5 Min", xp:15 },
+
+  // Lernen – easy
   { title:"Lerne 1 neues Wort", cat:"Lernen", diff:"easy", time:"2 Min", xp:10 },
   { title:"Lies 1 Absatz eines Artikels", cat:"Lernen", diff:"easy", time:"3 Min", xp:10 },
-  { title:"2 Karteikarten wiederholen", cat:"Lernen", diff:"med", time:"4 Min", xp:15 },
 
-  // Spaß
+  // Lernen – medium
+  { title:"2 Karteikarten wiederholen", cat:"Lernen", diff:"med", time:"4 Min", xp:15 },
+  { title:"Kurzes Erklärvideo (≤5 Min) schauen", cat:"Lernen", diff:"med", time:"5 Min", xp:15 },
+
+  // Spaß – easy
   { title:"10 Sek. Freestyle‑Tanz", cat:"Spaß", diff:"easy", time:"1 Min", xp:10 },
   { title:"Erfinde einen absurden Superhelden‑Namen", cat:"Spaß", diff:"easy", time:"2 Min", xp:10 },
+
+  // Spaß – medium
+  { title:"Mini‑Rätsel lösen (Sudoku/KenKen)", cat:"Spaß", diff:"med", time:"5 Min", xp:15 },
 ];
 
 /* Utils */
@@ -79,7 +106,7 @@ function defaultState(){
   };
 }
 
-/* Generiert genau 3 easy, 3 med, 2 hard – mit Fallback, falls hard knapp ist */
+/* Generiert genau 3 easy, 3 med, 2 hard – robust */
 function generateDailyQuestsCategorized(){
   const easy = QUESTS.filter(q=>q.diff==="easy");
   const med  = QUESTS.filter(q=>q.diff==="med");
@@ -92,12 +119,12 @@ function generateDailyQuestsCategorized(){
     ...pickRandomFrom(med, Math.min(needMed, med.length)),
   ];
 
-  const hardNeeded = Math.min(needHard, hard.length);
-  chosen = [...chosen, ...pickRandomFrom(hard, hardNeeded)];
+  const hardTake = Math.min(needHard, hard.length);
+  chosen = [...chosen, ...pickRandomFrom(hard, hardTake)];
 
-  // Fallback: wenn harte fehlen, mit weiteren "med" auffüllen
-  if (hardNeeded < needHard) {
-    const missing = needHard - hardNeeded;
+  // Fallback: falls hard < 2, mit med auffüllen
+  if (hardTake < needHard) {
+    const missing = needHard - hardTake;
     const medPool = med.filter(m => !chosen.includes(m));
     chosen = [...chosen, ...pickRandomFrom(medPool, Math.min(missing, medPool.length))];
   }
@@ -107,6 +134,7 @@ function generateDailyQuestsCategorized(){
     ...q, done:false, claimed:false
   }));
 
+  // Sortierung: easy -> med -> hard
   const w = d => d==="easy"?1: d==="med"?2: 3;
   chosen.sort((a,b)=> w(a.diff)-w(b.diff));
   return chosen;
@@ -122,9 +150,9 @@ function loadState(){
       s.lastDay = todayKey();
       s.resetAt = nextResetMidnight().toISOString();
       s.quests = generateDailyQuestsCategorized();
-      s.rerolledForDay = false; // neues Tageskontingent
+      s.rerolledForDay = false;
     }
-    // Safety: Werte normalisieren
+    // Safety
     s.xp = Math.max(0, Math.min(100, s.xp|0));
     s.level = Math.max(1, s.level|0);
     if(!Array.isArray(s.quests) || s.quests.length===0){
@@ -257,7 +285,7 @@ document.querySelectorAll(".filter-btn").forEach(b=>{
   });
 });
 
-/* Reroll 1× pro Tag mit kategorisierter Auswahl (robust) */
+/* Reroll 1× pro Tag */
 $reroll.addEventListener("click", ()=>{
   if(state.rerolledForDay){
     toast("Reroll heute schon genutzt.", "warn");
