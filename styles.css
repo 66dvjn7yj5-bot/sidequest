@@ -1,4 +1,4 @@
-/* ===== Sidequests – Cyberpunk Neon Theme ===== */
+/* ===== Sidequests – Cyberpunk Neon Theme v2 ===== */
 
 :root{
   --bg: #0a0914;
@@ -6,8 +6,8 @@
   --bg-grad-2:#07162a;
 
   --panel:#0d0b1d;
-  --panel-2:#0f1024;
-  --stroke: rgba(170,120,255,.25);
+  --panel-2:#101233;
+  --stroke: rgba(170,120,255,.28);
   --stroke-soft: rgba(255,255,255,.08);
 
   --text:#eaf0ff;
@@ -18,7 +18,6 @@
   --neon-m:#ff6ad5;  /* magenta */
   --neon-y:#ffd86b;  /* yellow */
 
-  --shadow-1: 0 10px 30px rgba(0,0,0,.35);
   --shadow-2: 0 24px 70px rgba(0,0,0,.5);
 
   --r-xl: 22px;
@@ -39,6 +38,14 @@ body{
   overflow-x:hidden;
 }
 
+/* Chromatic aberration glow */
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background: radial-gradient(600px 300px at 80% -10%, rgba(179,138,255,.12), transparent 70%),
+              radial-gradient(800px 400px at -10% 0%, rgba(55,242,231,.10), transparent 70%);
+  mix-blend-mode: screen;
+}
+
 /* Subtle gridlines for cyber feel */
 body::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
@@ -55,8 +62,11 @@ body::before{
   background: repeating-linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,.015) 1px, transparent 3px, transparent 4px);
 }
 
+/* Hover particles canvas */
+#hoverParticles{ position: fixed; inset:0; pointer-events:none; z-index: 2 }
+
 /* Layout */
-.shell{ max-width: 560px; margin: 0 auto; padding: 18px 16px 28px; position: relative; z-index:1 }
+.shell{ max-width: 600px; margin: 0 auto; padding: 18px 16px 28px; position: relative; z-index:1 }
 
 /* Appbar */
 .appbar{
@@ -67,7 +77,7 @@ body::before{
   box-shadow: 0 10px 40px rgba(179,138,255,.15);
 }
 .appbar-inner{
-  max-width: 600px; margin:0 auto; padding: 12px 16px;
+  max-width: 640px; margin:0 auto; padding: 12px 16px;
   display:flex; align-items:center; justify-content:space-between; gap:14px;
 }
 .brand{ display:flex; align-items:center; gap:12px }
@@ -94,7 +104,6 @@ body::before{
   box-shadow: 0 2px 10px rgba(0,0,0,.25);
 }
 .chip.neon{ box-shadow: 0 0 14px rgba(55,242,231,.18), inset 0 0 12px rgba(179,138,255,.10) }
-.chip.streak{ color:#ffb15e; border-color: rgba(255,177,94,.45) }
 
 /* Panels */
 .panel{
@@ -141,6 +150,22 @@ body::before{
   text-shadow: 0 1px 0 rgba(255,255,255,.35);
   box-shadow: 0 10px 28px rgba(179,138,255,.35), 0 0 32px rgba(55,242,231,.25);
 }
+.btn:disabled{
+  opacity:.55; cursor:not-allowed; filter: grayscale(.3);
+}
+
+/* Filter buttons */
+.filter{ display:flex; gap:8px; flex-wrap:wrap }
+.filter-btn{
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border:1px solid var(--stroke-soft);
+  color: var(--text); font-weight:800; padding:6px 10px; border-radius: 10px; cursor:pointer;
+}
+.filter-btn.active{
+  background:
+    linear-gradient(180deg, rgba(55,242,231,.25), rgba(179,138,255,.25));
+  border-color: rgba(179,138,255,.6);
+}
 
 /* Tasks */
 .list{ display:grid; gap:12px }
@@ -156,7 +181,7 @@ body::before{
   box-shadow: 0 0 24px rgba(55,242,231,.08) inset;
 }
 .task:hover{ transform: translateY(-1px); box-shadow: 0 16px 40px rgba(0,0,0,.30) }
-.task.done{ opacity:.7; filter:saturate(.85) }
+.task.done{ opacity:.8; filter:saturate(.85) }
 .task-title{ font-weight:900; letter-spacing:.2px }
 .task-sub{ display:flex; flex-wrap:wrap; gap:8px; margin-top:7px }
 
@@ -168,7 +193,6 @@ body::before{
   box-shadow: 0 0 18px rgba(179,138,255,.12) inset;
 }
 .badge .dot{ width:8px; height:8px; border-radius:50%; display:inline-block }
-.b-coins{ color:#ffeaa4; border-color: rgba(255,234,164,.35) }
 .b-diff-easy{ color:#7bffc8; border-color: rgba(123,255,200,.35) }
 .b-diff-med{ color:#ffd86b; border-color: rgba(255,216,107,.38) }
 .b-diff-hard{ color:#ff8cb8; border-color: rgba(255,140,184,.38) }
@@ -182,3 +206,6 @@ body::before{
 @media (prefers-reduced-motion: no-preference){
   .task, .btn, .panel { transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease }
 }
+
+/* Cursor glow */
+body{ cursor: crosshair }
