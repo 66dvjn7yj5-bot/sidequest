@@ -19,13 +19,14 @@
         </div>
       </div>
 
-      <!-- Deutliches Level-Feld -->
       <div class="status">
+        <!-- Deutliches Level-Feld -->
         <div class="level-card" id="levelCard" aria-live="polite">
           <div class="level-label">Level</div>
           <div class="level-value" id="levelValue">1</div>
         </div>
-        <div class="chip neon" title="Gesamt‑XP in aktuellem Level">
+        <!-- XP im aktuellen Level -->
+        <div class="chip neon" title="XP im aktuellen Level">
           <span>✨</span><span id="xp">0 XP</span>
         </div>
       </div>
@@ -36,7 +37,7 @@
     <!-- Level Progress -->
     <section class="panel">
       <div class="panel-head">
-        <h2>Level‑Fortschritt</h2>
+        <h3>Level‑Fortschritt</h3>
         <div class="muted small" id="nextLevelInfo">0/100 XP bis Level 2</div>
       </div>
       <div class="xpbar">
@@ -61,7 +62,7 @@
     <!-- Aufgaben -->
     <section class="panel">
       <div class="panel-head">
-        <h2>Heutige Fragen</h2>
+        <h3>Heutige Fragen</h3>
         <div class="filter">
           <button class="filter-btn active" data-filter="all">Alle</button>
           <button class="filter-btn" data-filter="todo">Unerledigt</button>
@@ -71,7 +72,7 @@
       <div id="tasksCount" class="muted small"></div>
       <div id="questList" class="list" aria-live="polite"></div>
       <div class="panel-foot small muted">
-        Reroll: 3 leichte, 3 mittlere und 2 schwere Aufgaben. Sammle XP pro Frage – XP werden beim Level‑Up auf 0 zurückgesetzt.
+        Reroll: 3 leichte, 3 mittlere und 2 schwere Aufgaben. XP werden beim Level‑Up auf 0 zurückgesetzt.
       </div>
     </section>
   </main>
