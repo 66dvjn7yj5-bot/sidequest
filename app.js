@@ -1,3 +1,5 @@
+// ===== Daily Sidequests: State, Rendering, Interaktionen =====
+
 // ---------------------------
 // Daten & Utilities
 // ---------------------------
@@ -30,9 +32,9 @@ const SHOP_ITEMS = [
   { id:"hat_mint", name:"Mint‑Hut", type:"hat", price:60, emoji:"🎩", color:"#7cf1c6" },
   { id:"hat_pink", name:"Pink‑Kappe", type:"hat", price:60, emoji:"🧢", color:"#ff7bc7" },
   { id:"acc_band", name:"Stirnband", type:"acc", price:40, emoji:"🟣", color:"#8aa9ff" },
-  { id:"acc_scarf", name:"Schal", type:"acc", price:40, emoji:"🧣", color:"#ffd66b" },
-  { id:"hat_star", name:"Stern‑Krone", type:"hat", price:120, emoji:"⭐", color:"#ffd66b" },
-  { id:"acc_glow", name:"Glow‑Bar", type:"acc", price:90, emoji:"✨", color:"#7cf1c6" },
+  { id:"acc_scarf", name:"Schal", type:"acc", price:40, emoji:"🧣", color:"#ffd76d" },
+  { id:"hat_star", name:"Stern‑Krone", type:"hat", price:120, emoji:"⭐", color:"#ffd76d" },
+  { id:"acc_glow", name:"Glow‑Bar", type:"acc", price:90, emoji:"✨", color:"#5ff3cf" },
 ];
 
 const STORAGE_KEY="daily_sidequests_v1";
@@ -170,7 +172,7 @@ function questTag(q){
   const t1 = `<span class="tag">${q.cat}</span>`;
   const t2 = `<span class="tag">${q.diff}</span>`;
   const t3 = `<span class="tag">${q.time}</span>`;
-  return t1+t2+t3;
+  return `<div class="q-tags">${t1}${t2}${t3}</div>`;
 }
 function renderQuests(){
   $questList.innerHTML = "";
@@ -198,7 +200,7 @@ function renderShop(){
     const el = document.createElement("div");
     el.className = "item";
     el.innerHTML = `
-      <div class="icon" style="border-color: rgba(255,255,255,.1)">${item.emoji}</div>
+      <div class="icon" aria-hidden="true">${item.emoji}</div>
       <div class="meta">
         <b>${item.name}</b>
         <span class="muted">${item.type==="hat"?"Kopfbedeckung":"Accessoire"} • ${item.price} Coins</span>
@@ -237,17 +239,13 @@ function renderEquipped(){
 
   const hatSVG = document.getElementById("hat");
   const accSVG = document.getElementById("acc");
+  hatSVG.style.display = hatItem ? "block" : "none";
+  accSVG.style.display = accItem ? "block" : "none";
   if(hatItem){
-    hatSVG.style.display = "block";
     hatSVG.querySelector("path").setAttribute("fill", hatItem.color || "#7cf1c6");
-  }else{
-    hatSVG.style.display = "none";
   }
   if(accItem){
-    accSVG.style.display = "block";
     accSVG.querySelector("rect").setAttribute("fill", accItem.color || "#8aa9ff");
-  }else{
-    accSVG.style.display = "none";
   }
 }
 function renderAll(){
@@ -347,13 +345,13 @@ function toast(msg, type="info"){
   div.style.left="50%";
   div.style.bottom="20px";
   div.style.transform="translateX(-50%)";
-  div.style.background = type==="success" ? "linear-gradient(135deg,#1e6,#0b4)" :
-                       type==="warn" ? "linear-gradient(135deg,#fc6,#a64)" :
-                       type==="danger" ? "linear-gradient(135deg,#f77,#933)" :
-                       "linear-gradient(135deg,#8aa9ff,#3a4ea0)";
+  div.style.background = type==="success" ? "linear-gradient(135deg,#4be1a7,#1a8a62)" :
+                       type==="warn" ? "linear-gradient(135deg,#ffd76d,#a66b1a)" :
+                       type==="danger" ? "linear-gradient(135deg,#ff7b7b,#9a2b2b)" :
+                       "linear-gradient(135deg,#5ea2ff,#3a6fe0)";
   div.style.color="#0b0f1b";
   div.style.padding="10px 14px";
-  div.style.borderRadius="10px";
+  div.style.borderRadius="12px";
   div.style.fontWeight="700";
   div.style.boxShadow="0 10px 30px rgba(0,0,0,.35)";
   div.style.zIndex=9999;
@@ -372,7 +370,7 @@ function celebrate(){
     y: -10,
     vx: (Math.random()-.5)*4,
     vy: Math.random()*2+2,
-    c: Math.random()<.5 ? "#7cf1c6" : "#8aa9ff",
+    c: Math.random()<.5 ? "#5ff3cf" : "#5ea2ff",
     s: Math.random()*3+2,
     life: Math.random()*60+40
   }));
