@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>Daily Sidequests – Premium</title>
+  <title>Sidequests – Premium</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="dark light" />
   <meta name="theme-color" content="#0b0e17" />
@@ -13,29 +13,16 @@
     <div class="appbar-inner">
       <div class="brand">
         <div class="mark">◆</div>
-        <div class="brand-text">
+        <div>
           <h1>Sidequests</h1>
-          <p class="brand-sub">Premium Daily Goals</p>
+          <div class="brand-sub">Premium Daily Goals</div>
         </div>
       </div>
-
       <div class="status">
-        <div class="status-chip" aria-label="Münzen">
-          <span class="ic ic-coin" aria-hidden="true">◉</span>
-          <span id="coins">0</span>
-        </div>
-        <div class="status-chip" aria-label="XP">
-          <span class="ic ic-xp" aria-hidden="true">⬡</span>
-          <span id="xp">0</span>
-        </div>
-        <div class="status-chip" aria-label="Level">
-          <span class="ic ic-level" aria-hidden="true">⬢</span>
-          <span id="level">1</span>
-        </div>
-        <div class="status-chip streak" aria-label="Streak">
-          <span class="ic ic-flame" aria-hidden="true">🔥</span>
-          <span id="streak">0</span>
-        </div>
+        <div class="chip"><span aria-hidden="true">🪙</span><span id="coins">0</span></div>
+        <div class="chip"><span aria-hidden="true">✨</span><span id="xp">0</span></div>
+        <div class="chip"><span aria-hidden="true">⬢</span><span id="level">1</span></div>
+        <div class="chip streak"><span aria-hidden="true">🔥</span><span id="streak">0</span></div>
       </div>
     </div>
   </header>
@@ -53,14 +40,12 @@
 
     <section class="panel">
       <div class="panel-head">
-        <h2>Heutige Sidequests</h2>
+        <h2>Heutige Fragen</h2>
         <span id="tasksCount" class="muted small"></span>
       </div>
-
       <div id="questList" class="list" aria-live="polite"></div>
-
       <div class="panel-foot muted small">
-        Tipp: Sammle Coins und XP. Halte deinen 🔥‑Streak durch tägliche Besuche.
+        Tipp: Sammle Coins/XP und halte deinen 🔥‑Streak durch tägliche Besuche.
       </div>
     </section>
 
@@ -101,22 +86,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-<script>
-  function nextMidnight(){
-    const d = new Date();
-    d.setHours(24,0,0,0);
-    return d;
-  }
-  function fmt(h){ return h<10 ? "0"+h : ""+h }
-  function updateReset(){
-    const target = nextMidnight();
-    const now = new Date();
-    let ms = Math.max(0, target - now);
-    const h = Math.floor(ms/3_600_000);
-    const m = Math.floor((ms % 3_600_000)/60_000);
-    const el = document.getElementById("resetTimer");
-    if(el) el.textContent = `${fmt(h)}:${fmt(m)}`;
-  }
-  updateReset();
-  setInterval(updateReset, 15000);
-</script>
