@@ -19,13 +19,29 @@
         </div>
       </div>
       <div class="status">
-        <div class="chip neon"><span>⬢</span><span id="level">1</span></div>
-        <div class="chip neon"><span>✨</span><span id="xp">0 XP</span></div>
+        <div class="chip neon" title="Aktuelles Level">
+          <span>⬢</span><span id="level">1</span>
+        </div>
+        <div class="chip neon" title="Gesamt‑XP">
+          <span>✨</span><span id="xp">0 XP</span>
+        </div>
       </div>
     </div>
   </header>
 
   <main class="shell">
+    <!-- Level Progress -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Level‑Fortschritt</h2>
+        <div class="muted small" id="nextLevelInfo">0/100 XP bis Level 2</div>
+      </div>
+      <div class="xpbar">
+        <div class="xpbar-fill" id="xpFill" style="width:0%"></div>
+      </div>
+    </section>
+
+    <!-- Reset + Reroll -->
     <section class="panel timer-panel">
       <div class="timer-left">
         <div class="timer-title">Nächster Reset</div>
@@ -39,6 +55,7 @@
       </div>
     </section>
 
+    <!-- Aufgaben -->
     <section class="panel">
       <div class="panel-head">
         <h2>Heutige Fragen</h2>
@@ -51,7 +68,7 @@
       <div id="tasksCount" class="muted small"></div>
       <div id="questList" class="list" aria-live="polite"></div>
       <div class="panel-foot small muted">
-        Reroll erzeugt 3 leichte, 3 mittlere und 2 schwere Aufgaben. Pro Aufgabe sammelst du XP – Level steigt automatisch.
+        Reroll: 3 leichte, 3 mittlere und 2 schwere Aufgaben. Sammle XP pro Frage – Level steigt automatisch.
       </div>
     </section>
   </main>
