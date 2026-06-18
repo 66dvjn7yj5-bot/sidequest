@@ -1,4 +1,4 @@
-/* ===== Sidequests – Cyberpunk Neon Theme v3 (XP‑Bar + Tasks sichtbar) ===== */
+/* ===== Sidequests – Cyberpunk Neon Theme v5 (Level-Card + Level-Up-Anim) ===== */
 
 :root{
   --bg: #0a0914;
@@ -46,7 +46,7 @@ body::after{
   mix-blend-mode: screen;
 }
 
-/* Subtle gridlines for cyber feel */
+/* Subtle gridlines */
 body::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background-image:
@@ -92,10 +92,52 @@ body::before{
     0 0 24px rgba(55,242,231,.25),
     inset 0 0 0 2px rgba(255,255,255,.08);
 }
-.brand h1{ margin:0; font-size:17px; font-weight:900; letter-spacing:.2px }
-.brand-sub{ margin:0; font-size:12px; color:var(--muted) }
 
-.status{ display:flex; gap:8px; flex-wrap:wrap }
+/* Deutliches Level-Feld */
+.status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
+.level-card{
+  display:grid; grid-template-columns:auto 1fr; align-items:center; gap:10px;
+  padding:10px 14px; border-radius: 14px;
+  background: linear-gradient(180deg, rgba(55,242,231,.18), rgba(179,138,255,.18));
+  border:1px solid rgba(179,138,255,.55);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35), 0 0 24px rgba(55,242,231,.18) inset;
+  position: relative; overflow:hidden;
+}
+.level-label{
+  font-size:12px; font-weight:900; letter-spacing:.25px; color:#061018; text-transform:uppercase;
+  background: linear-gradient(90deg, #37f2e7, #b38aff);
+  -webkit-background-clip:text; background-clip:text; color: transparent;
+  text-shadow: 0 0 10px rgba(55,242,231,.35);
+}
+.level-value{
+  font-size:18px; font-weight:900; letter-spacing:.4px; color:#031015;
+  padding:6px 10px; border-radius:10px;
+  background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,255,255,.55));
+  border:1px solid rgba(255,255,255,.5);
+  text-shadow: 0 1px 0 rgba(255,255,255,.65);
+}
+
+/* Level-Up Animation */
+@keyframes levelUpPulse{
+  0%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(55,242,231,.0) }
+  30%{ transform: scale(1.05) }
+  60%{ transform: scale(1); }
+  100%{ transform: scale(1); }
+}
+@keyframes levelUpRings{
+  0%{ opacity:.6; transform: scale(1) }
+  100%{ opacity:0; transform: scale(2.2) }
+}
+.level-card.level-up{
+  animation: levelUpPulse .8s ease;
+}
+.level-card.level-up::after{
+  content:""; position:absolute; inset:-2px; border-radius: inherit; pointer-events:none;
+  border:2px solid rgba(55,242,231,.65);
+  animation: levelUpRings .8s ease;
+}
+
+/* Chips */
 .chip{
   display:inline-flex; align-items:center; gap:6px;
   padding:7px 11px; border-radius:999px; font-size:13px; font-weight:800;
@@ -226,5 +268,5 @@ body::before{
   .task, .btn, .panel, .xpbar-fill { transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease, width .35s ease }
 }
 
-/* Cursor glow */
+/* Cursor */
 body{ cursor: crosshair }
