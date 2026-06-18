@@ -18,11 +18,14 @@
           <div class="brand-sub">Neon Daily Protocol</div>
         </div>
       </div>
+
+      <!-- Deutliches Level-Feld -->
       <div class="status">
-        <div class="chip neon" title="Aktuelles Level">
-          <span>⬢</span><span id="level">1</span>
+        <div class="level-card" id="levelCard" aria-live="polite">
+          <div class="level-label">Level</div>
+          <div class="level-value" id="levelValue">1</div>
         </div>
-        <div class="chip neon" title="Gesamt‑XP">
+        <div class="chip neon" title="Gesamt‑XP in aktuellem Level">
           <span>✨</span><span id="xp">0 XP</span>
         </div>
       </div>
@@ -68,7 +71,7 @@
       <div id="tasksCount" class="muted small"></div>
       <div id="questList" class="list" aria-live="polite"></div>
       <div class="panel-foot small muted">
-        Reroll: 3 leichte, 3 mittlere und 2 schwere Aufgaben. Sammle XP pro Frage – Level steigt automatisch.
+        Reroll: 3 leichte, 3 mittlere und 2 schwere Aufgaben. Sammle XP pro Frage – XP werden beim Level‑Up auf 0 zurückgesetzt.
       </div>
     </section>
   </main>
