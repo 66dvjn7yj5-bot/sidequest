@@ -19,10 +19,8 @@
         </div>
       </div>
       <div class="status">
-        <div class="chip neon"><span>🪙</span><span id="coins">0</span></div>
-        <div class="chip neon"><span>✨</span><span id="xp">0</span></div>
         <div class="chip neon"><span>⬢</span><span id="level">1</span></div>
-        <div class="chip streak"><span>🔥</span><span id="streak">0</span></div>
+        <div class="chip neon"><span>✨</span><span id="xp">0 XP</span></div>
       </div>
     </div>
   </header>
@@ -34,7 +32,7 @@
         <div class="timer-value"><span id="resetH">00</span>:<span id="resetM">00</span></div>
       </div>
       <div class="timer-right">
-        <button id="reroll" class="btn btn-reroll">
+        <button id="reroll" class="btn btn-reroll" title="Neue Fragen (1×/Tag)">
           <span class="btn-ico" aria-hidden="true">⟳</span>
           Neue Fragen
         </button>
@@ -44,16 +42,26 @@
     <section class="panel">
       <div class="panel-head">
         <h2>Heutige Fragen</h2>
-        <span id="tasksCount" class="muted small"></span>
+        <div class="filter">
+          <button class="filter-btn active" data-filter="all">Alle</button>
+          <button class="filter-btn" data-filter="todo">Unerledigt</button>
+          <button class="filter-btn" data-filter="done">Erledigt</button>
+        </div>
       </div>
+      <div id="tasksCount" class="muted small"></div>
       <div id="questList" class="list" aria-live="polite"></div>
       <div class="panel-foot small muted">
-        Halte deinen 🔥‑Streak durch tägliche Besuche. Reroll ist jederzeit möglich.
+        Reroll erzeugt 3 leichte, 3 mittlere und 2 schwere Aufgaben. Pro Aufgabe sammelst du XP – Level steigt automatisch.
       </div>
     </section>
   </main>
 
+  <!-- Cyber overlays -->
   <div class="scanlines" aria-hidden="true"></div>
+  <canvas id="hoverParticles" aria-hidden="true"></canvas>
+  <audio id="uiClick" preload="auto">
+    <source src="data:audio/wav;base64,UklGRoQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAAgAABkYXRhYQAAAAAA/////wAAAP///+Hh4eDg4N/f39vb29nZ2dPT08/Pz8vLy8bGxsbGxoaGhgYGBQUFBMTEw8PDwAAAA" type="audio/wav">
+  </audio>
   <script src="app.js"></script>
 </body>
 </html>
