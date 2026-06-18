@@ -1,15 +1,11 @@
-// ===== Sidequests – Cyberpunk Edition v3 =====
-// Änderungen:
-// - Cyber-Effekte: Cursor-Glow, Klick-Sound, Hover-Partikel
-// - Reroll 1×/Tag, erzeugt 3x leicht, 3x mittel, 2x schwer
-// - Filter: Alle / Unerledigt / Erledigt
-// - Coins & Streak entfernt
-// - XP-only System: Level = 1 + Math.floor(XP / 100)
+// ===== Sidequests – Cyberpunk Edition v4 =====
+// Neu: XP‑Progress‑Meter bis zum nächsten Level, Tasks sichtbar, Level oben deutlich
+// Beibehalten: Reroll 1×/Tag (3E‑3M‑2S), Filter, XP‑Only Leveling
 
-const STORAGE_KEY = "sidequests_cyber_v3";
+const STORAGE_KEY = "sidequests_cyber_v4";
 const DAILY_TASK_COUNT = 8;
 
-/* Fragen/Aufgaben Katalog mit XP-Gewichtung */
+/* Fragen/Aufgaben Katalog mit XP-Werten */
 const QUESTS = [
   // Bewegung
   { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
@@ -94,7 +90,6 @@ function generateDailyQuestsCategorized(){
     done:false,
     claimed:false
   }));
-  // leichte -> schwere sortieren
   const w = d => d==="easy"?1: d==="med"?2: 3;
   chosen.sort((a,b)=> w(a.diff)-w(b.diff));
   return chosen;
@@ -104,7 +99,6 @@ function loadState(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultState();
     const s = JSON.parse(raw);
-    // Tagesreset
     const r = s.resetAt ? new Date(s.resetAt) : nextResetMidnight();
     if(now() >= r){
       s.lastDay = todayKey();
@@ -130,25 +124,30 @@ const $tasksCount = $("#tasksCount");
 const $questList = $("#questList");
 const $reroll = $("#reroll");
 const $audioClick = $("#uiClick");
+const $xpFill = $("#xpFill");
+const $nextLevelInfo = $("#nextLevelInfo");
 
 /* Filter state */
 let currentFilter = "all";
 
 /* Render */
 function renderStatus(){
-  $xp.textContent = `${state.xp} XP`;
   state.level = 1 + Math.floor(state.xp/100);
+  const xpIntoLevel = state.xp % 100;
+  const xpToNext = 100 - xpIntoLevel;
+  $xp.textContent = `${state.xp} XP`;
   $level.textContent = state.level;
+  $xpFill.style.width = `${(xpIntoLevel/100)*100}%`;
+  $nextLevelInfo.textContent = `${xpIntoLevel}/100 XP bis Level ${state.level+1}`;
 
   const r = new Date(state.resetAt);
   const {h,m} = timeToHHMM(Math.max(0, r - now()));
   $resetH.textContent = h; $resetM.textContent = m;
 
   const total = state.quests.length;
-  const done = state.quests.filter(q=>q.done).length;
-  $tasksCount.textContent = `${done}/${total} erledigt`;
+  const done = state.quests.filter(q=>q.done && q.claimed).length;
+  $tasksCount.textContent = `${done}/${total} abgeschlossen`;
 
-  // Reroll-Button aktiv/inaktiv je nach Tageslimit
   $reroll.disabled = !!state.rerolledForDay;
   $reroll.title = state.rerolledForDay ? "Reroll bereits genutzt (morgen wieder)" : "Neue Fragen (1×/Tag)";
 }
