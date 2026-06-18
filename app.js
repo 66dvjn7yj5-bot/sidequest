@@ -1,18 +1,21 @@
-// ===== Sidequests – Cyberpunk Edition v5 =====
-// Neu:
-// - Deutliches Level-Feld (Level X), mit Level-Up-Animation
-// - XP werden beim Level-Up zurückgesetzt (0–100 pro Level)
-// Beibehalten: Reroll 1×/Tag mit 3E-3M-2S, Filter, Cyber-Effekte
+// ===== Sidequests – Cyberpunk Edition (komplette Neuauflage) =====
+// Features:
+// - Deutliches Level-Feld + Level-Up-Animation
+// - XP 0–100 pro Level, XP-Reset beim Level-Up
+// - Tägliche Fragenliste mit Done -> Claim (+XP)
+// - Reroll 1×/Tag: 3 easy, 3 medium, 2 hard (mit Fallback)
+// - Täglicher Reset um Mitternacht
 
-const STORAGE_KEY = "sidequests_cyber_v5";
+const STORAGE_KEY = "sidequests_cyber_final_v1";
 
-/* Fragen/Aufgaben Katalog mit XP-Werten */
+/* Fragen-/Aufgaben-Katalog */
 const QUESTS = [
   // Bewegung
   { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
   { title:"30‑Sekunden Plank", cat:"Bewegung", diff:"med", time:"1 Min", xp:15 },
   { title:"10 Liegestütze", cat:"Bewegung", diff:"med", time:"3 Min", xp:20 },
   { title:"1 km Spaziergang", cat:"Bewegung", diff:"hard", time:"12 Min", xp:30 },
+  { title:"15 Minuten zügig laufen", cat:"Bewegung", diff:"hard", time:"15 Min", xp:30 },
 
   // Achtsamkeit
   { title:"1 Minute bewusst atmen", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
@@ -76,21 +79,34 @@ function defaultState(){
   };
 }
 
-/* Generiert genau 3 easy, 3 med, 2 hard */
+/* Generiert genau 3 easy, 3 med, 2 hard – mit Fallback, falls hard knapp ist */
 function generateDailyQuestsCategorized(){
   const easy = QUESTS.filter(q=>q.diff==="easy");
   const med  = QUESTS.filter(q=>q.diff==="med");
   const hard = QUESTS.filter(q=>q.diff==="hard");
-  const chosen = [
-    ...pickRandomFrom(easy, 3),
-    ...pickRandomFrom(med, 3),
-    ...pickRandomFrom(hard, 2),
-  ].map((q,i)=>({
+
+  const needEasy = 3, needMed = 3, needHard = 2;
+
+  let chosen = [
+    ...pickRandomFrom(easy, Math.min(needEasy, easy.length)),
+    ...pickRandomFrom(med, Math.min(needMed, med.length)),
+  ];
+
+  const hardNeeded = Math.min(needHard, hard.length);
+  chosen = [...chosen, ...pickRandomFrom(hard, hardNeeded)];
+
+  // Fallback: wenn harte fehlen, mit weiteren "med" auffüllen
+  if (hardNeeded < needHard) {
+    const missing = needHard - hardNeeded;
+    const medPool = med.filter(m => !chosen.includes(m));
+    chosen = [...chosen, ...pickRandomFrom(medPool, Math.min(missing, medPool.length))];
+  }
+
+  chosen = chosen.map((q,i)=>({
     id: `${todayKey()}_${i}_${Math.random().toString(36).slice(2,6)}`,
-    ...q,
-    done:false,
-    claimed:false
+    ...q, done:false, claimed:false
   }));
+
   const w = d => d==="easy"?1: d==="med"?2: 3;
   chosen.sort((a,b)=> w(a.diff)-w(b.diff));
   return chosen;
@@ -108,9 +124,12 @@ function loadState(){
       s.quests = generateDailyQuestsCategorized();
       s.rerolledForDay = false; // neues Tageskontingent
     }
-    // Safety: XP immer auf 0–100 clampen
+    // Safety: Werte normalisieren
     s.xp = Math.max(0, Math.min(100, s.xp|0));
     s.level = Math.max(1, s.level|0);
+    if(!Array.isArray(s.quests) || s.quests.length===0){
+      s.quests = generateDailyQuestsCategorized();
+    }
     return s;
   }catch(e){
     console.warn("State load error", e);
@@ -212,14 +231,13 @@ $questList.addEventListener("click", (e)=>{
 
     // Level-Up Logik mit XP-Reset pro Level (100 XP pro Stufe)
     while(state.xp >= 100){
-      state.xp -= 100;        // XP ins nächste Level "rollen"
-      state.level += 1;       // Level erhöhen
+      state.xp -= 100;
+      state.level += 1;
     }
 
     celebrate();
     toast(`+${q.xp} XP`, "success");
 
-    // Level-Up Animation triggern, wenn Level gestiegen
     if(state.level > beforeLevel){
       triggerLevelUpAnimation();
       toast(`Level ${state.level} erreicht!`, "success");
@@ -239,7 +257,7 @@ document.querySelectorAll(".filter-btn").forEach(b=>{
   });
 });
 
-/* Reroll 1× pro Tag mit kategorisierter Auswahl */
+/* Reroll 1× pro Tag mit kategorisierter Auswahl (robust) */
 $reroll.addEventListener("click", ()=>{
   if(state.rerolledForDay){
     toast("Reroll heute schon genutzt.", "warn");
@@ -273,8 +291,7 @@ setInterval(checkReset, 15_000);
 function triggerLevelUpAnimation(){
   if(!$levelCard) return;
   $levelCard.classList.remove("level-up");
-  // reflow to restart animation
-  void $levelCard.offsetWidth;
+  void $levelCard.offsetWidth; // reflow
   $levelCard.classList.add("level-up");
 }
 
