@@ -1,39 +1,49 @@
-// ===== Sidequests – Cyberpunk Edition =====
-// Reroll jederzeit nutzbar. Shop & Avatar entfernt. Fokus auf Fragen/Status.
-// Reset um Mitternacht, Streak-Logik bleibt bestehen.
+// ===== Sidequests – Cyberpunk Edition v3 =====
+// Änderungen:
+// - Cyber-Effekte: Cursor-Glow, Klick-Sound, Hover-Partikel
+// - Reroll 1×/Tag, erzeugt 3x leicht, 3x mittel, 2x schwer
+// - Filter: Alle / Unerledigt / Erledigt
+// - Coins & Streak entfernt
+// - XP-only System: Level = 1 + Math.floor(XP / 100)
 
-const STORAGE_KEY = "sidequests_cyber_v1";
+const STORAGE_KEY = "sidequests_cyber_v3";
 const DAILY_TASK_COUNT = 8;
 
-/* Fragen/Aufgaben Katalog */
+/* Fragen/Aufgaben Katalog mit XP-Gewichtung */
 const QUESTS = [
   // Bewegung
-  { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
-  { title:"30‑Sekunden Plank", cat:"Bewegung", diff:"med", time:"1 Min", reward:{coins:18, xp:15} },
-  { title:"10 Liegestütze", cat:"Bewegung", diff:"med", time:"3 Min", reward:{coins:22, xp:20} },
-  { title:"1 km Spaziergang", cat:"Bewegung", diff:"hard", time:"12 Min", reward:{coins:35, xp:30} },
+  { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
+  { title:"30‑Sekunden Plank", cat:"Bewegung", diff:"med", time:"1 Min", xp:15 },
+  { title:"10 Liegestütze", cat:"Bewegung", diff:"med", time:"3 Min", xp:20 },
+  { title:"1 km Spaziergang", cat:"Bewegung", diff:"hard", time:"12 Min", xp:30 },
+
   // Achtsamkeit
-  { title:"1 Minute bewusst atmen", cat:"Achtsamkeit", diff:"easy", time:"1 Min", reward:{coins:10, xp:10} },
-  { title:"3 Dinge notieren, die gut waren", cat:"Achtsamkeit", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
-  { title:"5 Minuten offline sein", cat:"Achtsamkeit", diff:"med", time:"5 Min", reward:{coins:18, xp:15} },
+  { title:"1 Minute bewusst atmen", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
+  { title:"3 Dinge notieren, die gut waren", cat:"Achtsamkeit", diff:"easy", time:"3 Min", xp:10 },
+  { title:"5 Minuten offline sein", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
+
   // Kreativität
-  { title:"Skizziere ein kleines Doodle", cat:"Kreativität", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
-  { title:"Schreibe einen 2‑Zeilen‑Reim", cat:"Kreativität", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
-  { title:"Fotografiere etwas in Blau", cat:"Kreativität", diff:"med", time:"3 Min", reward:{coins:16, xp:12} },
+  { title:"Skizziere ein kleines Doodle", cat:"Kreativität", diff:"easy", time:"2 Min", xp:10 },
+  { title:"Schreibe einen 2‑Zeilen‑Reim", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Fotografiere etwas in Blau", cat:"Kreativität", diff:"med", time:"3 Min", xp:12 },
+
   // Soziales
-  { title:"Schicke eine nette Nachricht", cat:"Soziales", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
-  { title:"Bedanke dich bei jemandem", cat:"Soziales", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
-  { title:"Kurzes Telefonat mit Freund:in", cat:"Soziales", diff:"med", time:"5 Min", reward:{coins:20, xp:18} },
+  { title:"Schicke eine nette Nachricht", cat:"Soziales", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Bedanke dich bei jemandem", cat:"Soziales", diff:"easy", time:"2 Min", xp:10 },
+  { title:"Kurzes Telefonat mit Freund:in", cat:"Soziales", diff:"med", time:"5 Min", xp:18 },
+
   // Ordnung
-  { title:"Räume eine kleine Fläche auf", cat:"Ordnung", diff:"med", time:"5 Min", reward:{coins:22, xp:20} },
-  { title:"Mülleimer leeren", cat:"Ordnung", diff:"easy", time:"2 Min", reward:{coins:10, xp:8} },
+  { title:"Räume eine kleine Fläche auf", cat:"Ordnung", diff:"med", time:"5 Min", xp:20 },
+  { title:"Mülleimer leeren", cat:"Ordnung", diff:"easy", time:"2 Min", xp:8 },
+
   // Lernen
-  { title:"Lerne 1 neues Wort", cat:"Lernen", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
-  { title:"Lies 1 Absatz eines Artikels", cat:"Lernen", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
-  { title:"2 Karteikarten wiederholen", cat:"Lernen", diff:"med", time:"4 Min", reward:{coins:18, xp:15} },
+  { title:"Lerne 1 neues Wort", cat:"Lernen", diff:"easy", time:"2 Min", xp:10 },
+  { title:"Lies 1 Absatz eines Artikels", cat:"Lernen", diff:"easy", time:"3 Min", xp:10 },
+  { title:"2 Karteikarten wiederholen", cat:"Lernen", diff:"med", time:"4 Min", xp:15 },
+
   // Spaß
-  { title:"10 Sek. Freestyle‑Tanz", cat:"Spaß", diff:"easy", time:"1 Min", reward:{coins:12, xp:10} },
-  { title:"Erfinde einen absurden Superhelden‑Namen", cat:"Spaß", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
+  { title:"10 Sek. Freestyle‑Tanz", cat:"Spaß", diff:"easy", time:"1 Min", xp:10 },
+  { title:"Erfinde einen absurden Superhelden‑Namen", cat:"Spaß", diff:"easy", time:"2 Min", xp:10 },
 ];
 
 /* Utils */
@@ -41,7 +51,7 @@ const $ = sel => document.querySelector(sel);
 const now = () => new Date();
 function todayKey(){ return new Date().toISOString().slice(0,10); }
 function nextResetMidnight(){ const d = new Date(); d.setHours(24,0,0,0); return d; }
-function pickRandom(arr, n){
+function pickRandomFrom(arr, n){
   const pool=[...arr], out=[];
   while(out.length<n && pool.length){
     const i = Math.floor(Math.random()*pool.length);
@@ -60,22 +70,31 @@ function timeToHHMM(ms){
 let state = loadState();
 function defaultState(){
   return {
-    coins: 0,
     xp: 0,
     level: 1,
-    streak: 0,
     lastDay: todayKey(),
     resetAt: nextResetMidnight().toISOString(),
-    quests: generateDailyQuests(),
+    rerolledForDay: false, // 1×/Tag-Limit
+    quests: generateDailyQuestsCategorized(),
   };
 }
-function generateDailyQuests(){
-  const chosen = pickRandom(QUESTS, DAILY_TASK_COUNT).map((q,i)=>({
-    id: `${todayKey()}_${i}`,
+
+/* Generiert genau 3 easy, 3 med, 2 hard */
+function generateDailyQuestsCategorized(){
+  const easy = QUESTS.filter(q=>q.diff==="easy");
+  const med  = QUESTS.filter(q=>q.diff==="med");
+  const hard = QUESTS.filter(q=>q.diff==="hard");
+  const chosen = [
+    ...pickRandomFrom(easy, 3),
+    ...pickRandomFrom(med, 3),
+    ...pickRandomFrom(hard, 2),
+  ].map((q,i)=>({
+    id: `${todayKey()}_${i}_${Math.random().toString(36).slice(2,6)}`,
     ...q,
     done:false,
     claimed:false
   }));
+  // leichte -> schwere sortieren
   const w = d => d==="easy"?1: d==="med"?2: 3;
   chosen.sort((a,b)=> w(a.diff)-w(b.diff));
   return chosen;
@@ -88,15 +107,10 @@ function loadState(){
     // Tagesreset
     const r = s.resetAt ? new Date(s.resetAt) : nextResetMidnight();
     if(now() >= r){
-      const prev = new Date(s.lastDay || todayKey());
-      const today = new Date(todayKey());
-      const delta = Math.round((today - prev)/86400000);
-      if(delta===1) s.streak = (s.streak||0)+1;
-      else if(delta>1) s.streak = 0;
-
       s.lastDay = todayKey();
       s.resetAt = nextResetMidnight().toISOString();
-      s.quests = generateDailyQuests();
+      s.quests = generateDailyQuestsCategorized();
+      s.rerolledForDay = false; // neues Tageskontingent
     }
     s.level = 1 + Math.floor((s.xp||0)/100);
     return s;
@@ -108,29 +122,35 @@ function loadState(){
 function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
 /* DOM refs */
-const $coins = $("#coins");
 const $xp = $("#xp");
 const $level = $("#level");
-const $streak = $("#streak");
 const $resetH = $("#resetH");
 const $resetM = $("#resetM");
 const $tasksCount = $("#tasksCount");
 const $questList = $("#questList");
 const $reroll = $("#reroll");
+const $audioClick = $("#uiClick");
+
+/* Filter state */
+let currentFilter = "all";
 
 /* Render */
 function renderStatus(){
-  $coins.textContent = state.coins;
-  $xp.textContent = state.xp;
+  $xp.textContent = `${state.xp} XP`;
   state.level = 1 + Math.floor(state.xp/100);
   $level.textContent = state.level;
-  $streak.textContent = state.streak;
 
   const r = new Date(state.resetAt);
   const {h,m} = timeToHHMM(Math.max(0, r - now()));
   $resetH.textContent = h; $resetM.textContent = m;
 
-  $tasksCount.textContent = `${state.quests.filter(q=>q.done).length}/${state.quests.length} erledigt`;
+  const total = state.quests.length;
+  const done = state.quests.filter(q=>q.done).length;
+  $tasksCount.textContent = `${done}/${total} erledigt`;
+
+  // Reroll-Button aktiv/inaktiv je nach Tageslimit
+  $reroll.disabled = !!state.rerolledForDay;
+  $reroll.title = state.rerolledForDay ? "Reroll bereits genutzt (morgen wieder)" : "Neue Fragen (1×/Tag)";
 }
 function diffBadge(diff){
   if(diff==="easy") return `<span class="badge b-diff-easy"><span class="dot" style="background:#7bffc8"></span>Leicht</span>`;
@@ -138,32 +158,37 @@ function diffBadge(diff){
   return `<span class="badge b-diff-hard"><span class="dot" style="background:#ff8cb8"></span>Schwer</span>`;
 }
 function taskRow(q){
-  const coins = `<span class="badge b-coins">💰 ${q.reward.coins} Coins</span>`;
   const dif = diffBadge(q.diff);
   const cat = `<span class="badge b-cat">#${q.cat}</span>`;
   const time = `<span class="badge b-cat">⏱ ${q.time}</span>`;
   const action = !q.done
-    ? `<button class="btn btn-reroll" data-act="done" data-id="${q.id}">Erledigt</button>`
+    ? `<button class="btn" data-act="done" data-id="${q.id}">Erledigt</button>`
     : (!q.claimed
-      ? `<button class="btn" data-act="claim" data-id="${q.id}">Belohnung</button>`
+      ? `<button class="btn btn-reroll" data-act="claim" data-id="${q.id}">+${q.xp} XP</button>`
       : `<span class="badge b-cat">✓ Abgeschlossen</span>`);
   return `
     <div class="task ${q.done?"done":""}">
       <div>
         <div class="task-title">${q.title}</div>
-        <div class="task-sub">${coins}${dif}${cat}${time}</div>
+        <div class="task-sub">${dif}${cat}${time}</div>
       </div>
       <div class="actions">${action}</div>
     </div>
   `;
 }
+function filteredQuests(){
+  if(currentFilter==="todo") return state.quests.filter(q=>!q.done || (q.done && !q.claimed));
+  if(currentFilter==="done") return state.quests.filter(q=>q.done && q.claimed);
+  return state.quests;
+}
 function renderQuests(){
-  $questList.innerHTML = state.quests.map(taskRow).join("");
+  const items = filteredQuests().map(taskRow).join("");
+  $questList.innerHTML = items || `<div class="muted small">Keine Aufgaben im aktuellen Filter.</div>`;
 }
 function renderAll(){ renderStatus(); renderQuests(); }
 renderAll();
 
-/* Interaktionen */
+/* Interaktionen: Tasks */
 $questList.addEventListener("click", (e)=>{
   const btn = e.target.closest("button");
   if(!btn) return;
@@ -172,24 +197,42 @@ $questList.addEventListener("click", (e)=>{
   const q = state.quests.find(x=>x.id===id);
   if(!q) return;
 
+  playClick();
   if(act==="done"){
     q.done = true;
     toast(`Erledigt: ${q.title}`, "success");
   }else if(act==="claim"){
     if(!q.done || q.claimed) return;
     q.claimed = true;
-    state.coins += q.reward.coins;
-    state.xp += q.reward.xp;
+    state.xp += q.xp;
     celebrate();
-    toast(`Belohnung: +${q.reward.coins} Coins • +${q.reward.xp} XP`, "success");
+    toast(`+${q.xp} XP`, "success");
   }
   saveState(); renderAll();
 });
 
-/* Reroll: jederzeit möglich – keine Limits, kein versteckter Flag */
+/* Interaktionen: Filter */
+document.querySelectorAll(".filter-btn").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    document.querySelectorAll(".filter-btn").forEach(x=>x.classList.remove("active"));
+    b.classList.add("active");
+    currentFilter = b.dataset.filter;
+    playClick();
+    renderQuests();
+  });
+});
+
+/* Reroll 1× pro Tag mit kategorisierter Auswahl */
 $reroll.addEventListener("click", ()=>{
-  state.quests = generateDailyQuests();
-  toast("Fragen neu gemischt!", "success");
+  if(state.rerolledForDay){
+    toast("Reroll heute schon genutzt.", "warn");
+    playClick();
+    return;
+  }
+  playClick();
+  state.quests = generateDailyQuestsCategorized();
+  state.rerolledForDay = true;
+  toast("Neue Fragen generiert.", "success");
   saveState(); renderAll();
 });
 
@@ -197,15 +240,10 @@ $reroll.addEventListener("click", ()=>{
 function checkReset(){
   const r = new Date(state.resetAt);
   if(now() >= r){
-    const prev = new Date(state.lastDay || todayKey());
-    const today = new Date(todayKey());
-    const delta = Math.round((today - prev)/86400000);
-    if(delta===1) state.streak += 1;
-    else if(delta>1) state.streak = 0;
-
     state.lastDay = todayKey();
     state.resetAt = nextResetMidnight().toISOString();
-    state.quests = generateDailyQuests();
+    state.quests = generateDailyQuestsCategorized();
+    state.rerolledForDay = false;
     toast("Neuer Tag, neue Fragen!", "success");
     saveState(); renderAll();
   }else{
@@ -213,6 +251,50 @@ function checkReset(){
   }
 }
 setInterval(checkReset, 15_000);
+
+/* Cyber Effekte: Sound, Cursor-Glow, Hover-Partikel */
+function playClick(){
+  const a = $audioClick;
+  if(!a) return;
+  a.currentTime = 0;
+  a.volume = 0.25;
+  a.play().catch(()=>{});
+}
+
+/* Hover Particles */
+const canvas = document.getElementById("hoverParticles");
+const ctx = canvas.getContext("2d");
+function resizeCanvas(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+const particles = [];
+document.addEventListener("mousemove", (e)=>{
+  for(let i=0;i<3;i++){
+    particles.push({
+      x:e.clientX, y:e.clientY,
+      vx:(Math.random()-.5)*1.5, vy:(Math.random()-.5)*1.5,
+      s: Math.random()*2+1, life: 30+Math.random()*20,
+      col: Math.random()<.5 ? "#37f2e7" : "#b38aff"
+    });
+  }
+});
+(function tick(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.x+=p.vx; p.y+=p.vy; p.life--; p.s*=0.98;
+    ctx.fillStyle = p.col;
+    ctx.globalAlpha = Math.max(0,p.life/60);
+    ctx.fillRect(p.x, p.y, p.s, p.s);
+    if(p.life<=0 || p.s<0.3) particles.splice(i,1);
+  }
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(tick);
+})();
 
 /* UX: Toast & Confetti */
 function toast(msg, type="info"){
@@ -237,7 +319,7 @@ function celebrate(){
   c.width = window.innerWidth; c.height = window.innerHeight;
   Object.assign(c.style, { position:"fixed", inset:0, pointerEvents:"none", zIndex:9998 });
   document.body.appendChild(c);
-  const ctx = c.getContext("2d");
+  const ctx2 = c.getContext("2d");
   const N = 140;
   const parts = Array.from({length:N}, () => ({
     x: Math.random()*c.width, y: -10,
@@ -246,13 +328,13 @@ function celebrate(){
     col: Math.random()<.5 ? "#37f2e7" : "#b38aff"
   }));
   let f=0;
-  (function tick(){
-    ctx.clearRect(0,0,c.width,c.height);
+  (function tick2(){
+    ctx2.clearRect(0,0,c.width,c.height);
     parts.forEach(p=>{
       p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.life--;
-      ctx.fillStyle=p.col; ctx.fillRect(p.x,p.y,p.s,p.s);
+      ctx2.fillStyle=p.col; ctx2.fillRect(p.x,p.y,p.s,p.s);
     });
     f++;
-    if(f<110) requestAnimationFrame(tick); else c.remove();
+    if(f<110) requestAnimationFrame(tick2); else c.remove();
   })();
 }
