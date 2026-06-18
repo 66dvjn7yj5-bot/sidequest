@@ -1,13 +1,11 @@
-// ===== Sidequests – Premium Mobile Edition =====
-// Generierte Fragen/Aufgaben (8/Tag), Coins/XP/Svhw./Kategorie sichtbar,
-// nutzbare Shop-/Inventar-Buttons, Reset‑Timer hh:mm, Streak 🔥, LocalStorage
+// ===== Sidequests – Premium v2 =====
+// Redesign + Reroll jederzeit nutzbar (kein Tageslimit). Reroll generiert neue Fragen,
+// behält Streak/Coins/XP/Inventar. Reset um Mitternacht bleibt bestehen.
 
-const STORAGE_KEY = "sidequests_premium_v3";
+const STORAGE_KEY = "sidequests_premium_v4";
 const DAILY_TASK_COUNT = 8;
 
-/* ---------------------------
-   Katalog: Fragen/Aufgaben
----------------------------- */
+/* Fragen/Aufgaben Katalog */
 const QUESTS = [
   // Bewegung
   { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
@@ -44,19 +42,15 @@ const QUESTS = [
   { title:"Erfinde einen absurden Superhelden‑Namen", cat:"Spaß", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
 ];
 
-/* ---------------------------
-   Shop
----------------------------- */
+/* Shop */
 const SHOP_ITEMS = [
   { id:"hat_mint", name:"Mint‑Hut", type:"hat", price:100, emoji:"🎩", color:"#7cf1c6" },
   { id:"hat_royal", name:"Royal‑Cap", type:"hat", price:140, emoji:"👑", color:"#ffd76d" },
-  { id:"acc_glow", name:"Glow‑Bar", type:"acc", price:90, emoji:"✨", color:"#66f0d2" },
-  { id:"acc_band", name:"Stirnband", type:"acc", price:80, emoji:"🎗️", color:"#77b1ff" },
+  { id:"acc_glow", name:"Glow‑Bar", type:"acc", price:90, emoji:"✨", color:"#60e9cf" },
+  { id:"acc_band", name:"Stirnband", type:"acc", price:80, emoji:"🎗️", color:"#6aa8ff" },
 ];
 
-/* ---------------------------
-   Utils
----------------------------- */
+/* Utils */
 const $ = sel => document.querySelector(sel);
 const now = () => new Date();
 function todayKey(){ return new Date().toISOString().slice(0,10); }
@@ -76,24 +70,28 @@ function timeToHHMM(ms){
   return { h: pad2(Math.floor(tM/60)), m: pad2(tM%60) };
 }
 
-/* ---------------------------
-   State
----------------------------- */
+/* State */
+const STATE_VER = 2;
 let state = loadState();
 
 function defaultState(){
   return {
+    ver: STATE_VER,
     coins: 0,
     xp: 0,
     level: 1,
     streak: 0,
     lastDay: todayKey(),
-    rerollAvailable: true,
     resetAt: nextResetMidnight().toISOString(),
     quests: generateDailyQuests(),
     inventory: [],
     equipped: { hat:null, acc:null }
   };
+}
+function migrate(s){
+  if(!s.ver){ s.ver = STATE_VER; }
+  // weitere Migrationen bei Bedarf
+  return s;
 }
 function generateDailyQuests(){
   const chosen = pickRandom(QUESTS, DAILY_TASK_COUNT).map((q,i)=>({
@@ -103,15 +101,16 @@ function generateDailyQuests(){
     claimed:false
   }));
   const w = d => d==="easy"?1: d==="med"?2: 3;
-  chosen.sort((a,b)=> w(a.diff)-w(b.diff)); // sanfter Einstieg
+  chosen.sort((a,b)=> w(a.diff)-w(b.diff));
   return chosen;
 }
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultState();
-    const s = JSON.parse(raw);
-    // Reset?
+    let s = JSON.parse(raw);
+    s = migrate(s);
+    // Tagesreset
     const r = s.resetAt ? new Date(s.resetAt) : nextResetMidnight();
     if(now() >= r){
       const prev = new Date(s.lastDay || todayKey());
@@ -121,7 +120,6 @@ function loadState(){
       else if(delta>1) s.streak = 0;
 
       s.lastDay = todayKey();
-      s.rerollAvailable = true;
       s.resetAt = nextResetMidnight().toISOString();
       s.quests = generateDailyQuests();
     }
@@ -134,9 +132,7 @@ function loadState(){
 }
 function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-/* ---------------------------
-   DOM refs
----------------------------- */
+/* DOM */
 const $coins = $("#coins");
 const $xp = $("#xp");
 const $level = $("#level");
@@ -154,9 +150,7 @@ const $unequip = $("#unequip");
 const $hatSVG = document.getElementById("hat");
 const $accSVG = document.getElementById("acc");
 
-/* ---------------------------
-   Render
----------------------------- */
+/* Render */
 function renderStatus(){
   $coins.textContent = state.coins;
   $xp.textContent = state.xp;
@@ -166,8 +160,7 @@ function renderStatus(){
 
   const r = new Date(state.resetAt);
   const {h,m} = timeToHHMM(Math.max(0, r - now()));
-  $resetH.textContent = h;
-  $resetM.textContent = m;
+  $resetH.textContent = h; $resetM.textContent = m;
 
   $tasksCount.textContent = `${state.quests.filter(q=>q.done).length}/${state.quests.length} erledigt`;
 }
@@ -255,9 +248,7 @@ function renderAll(){
 }
 renderAll();
 
-/* ---------------------------
-   Events
----------------------------- */
+/* Interaktionen */
 $questList.addEventListener("click", (e)=>{
   const btn = e.target.closest("button");
   if(!btn) return;
@@ -280,17 +271,14 @@ $questList.addEventListener("click", (e)=>{
   saveState(); renderAll();
 });
 
+/* Reroll: jederzeit nutzbar */
 $reroll.addEventListener("click", ()=>{
-  if(!state.rerollAvailable){
-    toast("Reroll bereits genutzt. Morgen wieder!", "warn");
-    return;
-  }
   state.quests = generateDailyQuests();
-  state.rerollAvailable = false;
-  toast("Neue Fragen geladen!", "success");
+  toast("Fragen neu gemischt!", "success");
   saveState(); renderAll();
 });
 
+/* Shop/Inventar */
 $shop.addEventListener("click", (e)=>{
   const btn = e.target.closest("button");
   if(!btn) return;
@@ -320,9 +308,7 @@ $unequip.addEventListener("click", ()=>{
   saveState(); renderAll();
 });
 
-/* ---------------------------
-   Timer & Streak Handling
----------------------------- */
+/* Reset & Timer */
 function checkReset(){
   const r = new Date(state.resetAt);
   if(now() >= r){
@@ -333,7 +319,6 @@ function checkReset(){
     else if(delta>1) state.streak = 0;
 
     state.lastDay = todayKey();
-    state.rerollAvailable = true;
     state.resetAt = nextResetMidnight().toISOString();
     state.quests = generateDailyQuests();
     toast("Neuer Tag, neue Fragen!", "success");
@@ -344,25 +329,23 @@ function checkReset(){
 }
 setInterval(checkReset, 15_000);
 
-/* ---------------------------
-   UX: Toast & Confetti
----------------------------- */
+/* UX: Toast & Confetti */
 function toast(msg, type="info"){
   const el = document.createElement("div");
   Object.assign(el.style, {
     position:"fixed", left:"50%", bottom:"18px", transform:"translateX(-50%)",
-    background: type==="success" ? "linear-gradient(135deg,#66f0d2,#2aa484)" :
+    background: type==="success" ? "linear-gradient(135deg,#60e9cf,#2aa484)" :
                type==="warn" ? "linear-gradient(135deg,#ffd76d,#a66b1a)" :
                type==="danger" ? "linear-gradient(135deg,#ff7b7b,#9a2b2b)" :
-                                 "linear-gradient(135deg,#77b1ff,#3c79eb)",
+                                 "linear-gradient(135deg,#6aa8ff,#3c79eb)",
     color:"#0b0f1b", padding:"10px 14px", borderRadius:"12px",
-    fontWeight:"800", letterSpacing:".2px", zIndex:9999,
+    fontWeight:"900", letterSpacing:".2px", zIndex:9999,
     boxShadow:"0 10px 30px rgba(0,0,0,.35)"
   });
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(()=>{ el.style.opacity="0"; el.style.transition="opacity .4s"; }, 1500);
-  setTimeout(()=> el.remove(), 2100);
+  setTimeout(()=>{ el.style.opacity="0"; el.style.transition="opacity .4s"; }, 1600);
+  setTimeout(()=> el.remove(), 2200);
 }
 function celebrate(){
   const c = document.createElement("canvas");
@@ -370,15 +353,12 @@ function celebrate(){
   Object.assign(c.style, { position:"fixed", inset:0, pointerEvents:"none", zIndex:9998 });
   document.body.appendChild(c);
   const ctx = c.getContext("2d");
-  const N = 140;
+  const N = 150;
   const parts = Array.from({length:N}, () => ({
-    x: Math.random()*c.width,
-    y: -10,
-    vx:(Math.random()-.5)*4,
-    vy: Math.random()*2+2,
-    s: Math.random()*3+2,
-    life: Math.random()*60+40,
-    col: Math.random()<.5 ? "#66f0d2" : "#77b1ff"
+    x: Math.random()*c.width, y: -10,
+    vx:(Math.random()-.5)*4, vy: Math.random()*2+2,
+    s: Math.random()*3+2, life: Math.random()*60+40,
+    col: ["#60e9cf","#6aa8ff","#a88bff"][Math.floor(Math.random()*3)]
   }));
   let f=0;
   (function tick(){
