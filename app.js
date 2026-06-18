@@ -1,8 +1,8 @@
-// ===== Sidequests – Premium v2 =====
-// Redesign + Reroll jederzeit nutzbar (kein Tageslimit). Reroll generiert neue Fragen,
-// behält Streak/Coins/XP/Inventar. Reset um Mitternacht bleibt bestehen.
+// ===== Sidequests – Cyberpunk Edition =====
+// Reroll jederzeit nutzbar. Shop & Avatar entfernt. Fokus auf Fragen/Status.
+// Reset um Mitternacht, Streak-Logik bleibt bestehen.
 
-const STORAGE_KEY = "sidequests_premium_v4";
+const STORAGE_KEY = "sidequests_cyber_v1";
 const DAILY_TASK_COUNT = 8;
 
 /* Fragen/Aufgaben Katalog */
@@ -12,42 +12,28 @@ const QUESTS = [
   { title:"30‑Sekunden Plank", cat:"Bewegung", diff:"med", time:"1 Min", reward:{coins:18, xp:15} },
   { title:"10 Liegestütze", cat:"Bewegung", diff:"med", time:"3 Min", reward:{coins:22, xp:20} },
   { title:"1 km Spaziergang", cat:"Bewegung", diff:"hard", time:"12 Min", reward:{coins:35, xp:30} },
-
   // Achtsamkeit
   { title:"1 Minute bewusst atmen", cat:"Achtsamkeit", diff:"easy", time:"1 Min", reward:{coins:10, xp:10} },
   { title:"3 Dinge notieren, die gut waren", cat:"Achtsamkeit", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
   { title:"5 Minuten offline sein", cat:"Achtsamkeit", diff:"med", time:"5 Min", reward:{coins:18, xp:15} },
-
   // Kreativität
   { title:"Skizziere ein kleines Doodle", cat:"Kreativität", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
   { title:"Schreibe einen 2‑Zeilen‑Reim", cat:"Kreativität", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
   { title:"Fotografiere etwas in Blau", cat:"Kreativität", diff:"med", time:"3 Min", reward:{coins:16, xp:12} },
-
   // Soziales
   { title:"Schicke eine nette Nachricht", cat:"Soziales", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
   { title:"Bedanke dich bei jemandem", cat:"Soziales", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
   { title:"Kurzes Telefonat mit Freund:in", cat:"Soziales", diff:"med", time:"5 Min", reward:{coins:20, xp:18} },
-
   // Ordnung
   { title:"Räume eine kleine Fläche auf", cat:"Ordnung", diff:"med", time:"5 Min", reward:{coins:22, xp:20} },
   { title:"Mülleimer leeren", cat:"Ordnung", diff:"easy", time:"2 Min", reward:{coins:10, xp:8} },
-
   // Lernen
   { title:"Lerne 1 neues Wort", cat:"Lernen", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
   { title:"Lies 1 Absatz eines Artikels", cat:"Lernen", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
   { title:"2 Karteikarten wiederholen", cat:"Lernen", diff:"med", time:"4 Min", reward:{coins:18, xp:15} },
-
   // Spaß
   { title:"10 Sek. Freestyle‑Tanz", cat:"Spaß", diff:"easy", time:"1 Min", reward:{coins:12, xp:10} },
   { title:"Erfinde einen absurden Superhelden‑Namen", cat:"Spaß", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
-];
-
-/* Shop */
-const SHOP_ITEMS = [
-  { id:"hat_mint", name:"Mint‑Hut", type:"hat", price:100, emoji:"🎩", color:"#7cf1c6" },
-  { id:"hat_royal", name:"Royal‑Cap", type:"hat", price:140, emoji:"👑", color:"#ffd76d" },
-  { id:"acc_glow", name:"Glow‑Bar", type:"acc", price:90, emoji:"✨", color:"#60e9cf" },
-  { id:"acc_band", name:"Stirnband", type:"acc", price:80, emoji:"🎗️", color:"#6aa8ff" },
 ];
 
 /* Utils */
@@ -71,12 +57,9 @@ function timeToHHMM(ms){
 }
 
 /* State */
-const STATE_VER = 2;
 let state = loadState();
-
 function defaultState(){
   return {
-    ver: STATE_VER,
     coins: 0,
     xp: 0,
     level: 1,
@@ -84,14 +67,7 @@ function defaultState(){
     lastDay: todayKey(),
     resetAt: nextResetMidnight().toISOString(),
     quests: generateDailyQuests(),
-    inventory: [],
-    equipped: { hat:null, acc:null }
   };
-}
-function migrate(s){
-  if(!s.ver){ s.ver = STATE_VER; }
-  // weitere Migrationen bei Bedarf
-  return s;
 }
 function generateDailyQuests(){
   const chosen = pickRandom(QUESTS, DAILY_TASK_COUNT).map((q,i)=>({
@@ -108,8 +84,7 @@ function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultState();
-    let s = JSON.parse(raw);
-    s = migrate(s);
+    const s = JSON.parse(raw);
     // Tagesreset
     const r = s.resetAt ? new Date(s.resetAt) : nextResetMidnight();
     if(now() >= r){
@@ -132,7 +107,7 @@ function loadState(){
 }
 function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-/* DOM */
+/* DOM refs */
 const $coins = $("#coins");
 const $xp = $("#xp");
 const $level = $("#level");
@@ -140,15 +115,8 @@ const $streak = $("#streak");
 const $resetH = $("#resetH");
 const $resetM = $("#resetM");
 const $tasksCount = $("#tasksCount");
-
 const $questList = $("#questList");
 const $reroll = $("#reroll");
-const $shop = $("#shop");
-const $inventory = $("#inventory");
-const $equipped = $("#equipped");
-const $unequip = $("#unequip");
-const $hatSVG = document.getElementById("hat");
-const $accSVG = document.getElementById("acc");
 
 /* Render */
 function renderStatus(){
@@ -165,9 +133,9 @@ function renderStatus(){
   $tasksCount.textContent = `${state.quests.filter(q=>q.done).length}/${state.quests.length} erledigt`;
 }
 function diffBadge(diff){
-  if(diff==="easy") return `<span class="badge b-diff-easy"><span class="dot" style="background:#3ed795"></span>Leicht</span>`;
-  if(diff==="med")  return `<span class="badge b-diff-med"><span class="dot" style="background:#ffd76d"></span>Mittel</span>`;
-  return `<span class="badge b-diff-hard"><span class="dot" style="background:#ff6b6b"></span>Schwer</span>`;
+  if(diff==="easy") return `<span class="badge b-diff-easy"><span class="dot" style="background:#7bffc8"></span>Leicht</span>`;
+  if(diff==="med")  return `<span class="badge b-diff-med"><span class="dot" style="background:#ffd86b"></span>Mittel</span>`;
+  return `<span class="badge b-diff-hard"><span class="dot" style="background:#ff8cb8"></span>Schwer</span>`;
 }
 function taskRow(q){
   const coins = `<span class="badge b-coins">💰 ${q.reward.coins} Coins</span>`;
@@ -175,9 +143,9 @@ function taskRow(q){
   const cat = `<span class="badge b-cat">#${q.cat}</span>`;
   const time = `<span class="badge b-cat">⏱ ${q.time}</span>`;
   const action = !q.done
-    ? `<button class="btn btn-primary" data-act="done" data-id="${q.id}">Erledigt</button>`
+    ? `<button class="btn btn-reroll" data-act="done" data-id="${q.id}">Erledigt</button>`
     : (!q.claimed
-      ? `<button class="btn btn-primary" data-act="claim" data-id="${q.id}">Belohnung</button>`
+      ? `<button class="btn" data-act="claim" data-id="${q.id}">Belohnung</button>`
       : `<span class="badge b-cat">✓ Abgeschlossen</span>`);
   return `
     <div class="task ${q.done?"done":""}">
@@ -192,60 +160,7 @@ function taskRow(q){
 function renderQuests(){
   $questList.innerHTML = state.quests.map(taskRow).join("");
 }
-function renderShop(){
-  $shop.innerHTML = SHOP_ITEMS.map(item=>{
-    const owned = state.inventory.includes(item.id);
-    return `
-      <div class="shop-item">
-        <div class="icon">${item.emoji}</div>
-        <div class="meta">
-          <b>${item.name}</b>
-          <div class="small">${item.type==="hat"?"Kopfbedeckung":"Accessoire"} • ${item.price} Coins</div>
-        </div>
-        ${owned
-          ? `<button class="btn btn-ghost small" data-act="equip" data-id="${item.id}">Anlegen</button>`
-          : `<button class="btn btn-primary small" data-act="buy" data-id="${item.id}">Kaufen</button>`
-        }
-      </div>
-    `;
-  }).join("");
-}
-function renderInventory(){
-  if(state.inventory.length===0){
-    $inventory.innerHTML = `<span class="chip">Noch keine Items</span>`;
-    return;
-  }
-  $inventory.innerHTML = state.inventory.map(id=>{
-    const item = SHOP_ITEMS.find(i=>i.id===id);
-    return `<span class="chip">${item?item.name:id}</span>`;
-  }).join("");
-}
-function renderEquipped(){
-  const hatId = state.equipped.hat;
-  const accId = state.equipped.acc;
-  const hatItem = SHOP_ITEMS.find(i=>i.id===hatId);
-  const accItem = SHOP_ITEMS.find(i=>i.id===accId);
-  const names = [];
-  if(hatItem) names.push(hatItem.name);
-  if(accItem) names.push(accItem.name);
-  $equipped.textContent = names.length? names.join(", "): "—";
-
-  $hatSVG.style.display = hatItem ? "block" : "none";
-  $accSVG.style.display = accItem ? "block" : "none";
-  if(hatItem){
-    $hatSVG.querySelector("path").setAttribute("fill", hatItem.color || "#7cf1c6");
-  }
-  if(accItem){
-    $accSVG.querySelector("rect").setAttribute("fill", accItem.color || "#8aa9ff");
-  }
-}
-function renderAll(){
-  renderStatus();
-  renderQuests();
-  renderShop();
-  renderInventory();
-  renderEquipped();
-}
+function renderAll(){ renderStatus(); renderQuests(); }
 renderAll();
 
 /* Interaktionen */
@@ -271,40 +186,10 @@ $questList.addEventListener("click", (e)=>{
   saveState(); renderAll();
 });
 
-/* Reroll: jederzeit nutzbar */
+/* Reroll: jederzeit möglich – keine Limits, kein versteckter Flag */
 $reroll.addEventListener("click", ()=>{
   state.quests = generateDailyQuests();
   toast("Fragen neu gemischt!", "success");
-  saveState(); renderAll();
-});
-
-/* Shop/Inventar */
-$shop.addEventListener("click", (e)=>{
-  const btn = e.target.closest("button");
-  if(!btn) return;
-  const act = btn.dataset.act;
-  const id = btn.dataset.id;
-  const item = SHOP_ITEMS.find(i=>i.id===id);
-  if(!item) return;
-
-  if(act==="buy"){
-    if(state.inventory.includes(id)) { toast("Schon im Inventar.", "warn"); return; }
-    if(state.coins < item.price){ toast("Nicht genug Coins.", "danger"); return; }
-    state.coins -= item.price;
-    state.inventory.push(id);
-    toast(`Gekauft: ${item.name} (–${item.price} Coins)`, "success");
-  }else if(act==="equip"){
-    if(!state.inventory.includes(id)){ toast("Nicht im Inventar.", "warn"); return; }
-    if(item.type==="hat") state.equipped.hat = id;
-    if(item.type==="acc") state.equipped.acc = id;
-    toast(`${item.name} angelegt`, "success");
-  }
-  saveState(); renderAll();
-});
-
-$unequip.addEventListener("click", ()=>{
-  state.equipped = { hat:null, acc:null };
-  toast("Ausrüstung abgelegt.", "warn");
   saveState(); renderAll();
 });
 
@@ -334,18 +219,18 @@ function toast(msg, type="info"){
   const el = document.createElement("div");
   Object.assign(el.style, {
     position:"fixed", left:"50%", bottom:"18px", transform:"translateX(-50%)",
-    background: type==="success" ? "linear-gradient(135deg,#60e9cf,#2aa484)" :
-               type==="warn" ? "linear-gradient(135deg,#ffd76d,#a66b1a)" :
-               type==="danger" ? "linear-gradient(135deg,#ff7b7b,#9a2b2b)" :
-                                 "linear-gradient(135deg,#6aa8ff,#3c79eb)",
-    color:"#0b0f1b", padding:"10px 14px", borderRadius:"12px",
+    background: type==="success" ? "linear-gradient(135deg,#37f2e7,#b38aff)" :
+               type==="warn" ? "linear-gradient(135deg,#ffd86b,#b38a2a)" :
+               type==="danger" ? "linear-gradient(135deg,#ff6ad5,#8a1f6a)" :
+                                 "linear-gradient(135deg,#b38aff,#6b4fd1)",
+    color:"#070a10", padding:"10px 14px", borderRadius:"12px",
     fontWeight:"900", letterSpacing:".2px", zIndex:9999,
     boxShadow:"0 10px 30px rgba(0,0,0,.35)"
   });
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(()=>{ el.style.opacity="0"; el.style.transition="opacity .4s"; }, 1600);
-  setTimeout(()=> el.remove(), 2200);
+  setTimeout(()=>{ el.style.opacity="0"; el.style.transition="opacity .35s"; }, 1500);
+  setTimeout(()=> el.remove(), 2100);
 }
 function celebrate(){
   const c = document.createElement("canvas");
@@ -353,12 +238,12 @@ function celebrate(){
   Object.assign(c.style, { position:"fixed", inset:0, pointerEvents:"none", zIndex:9998 });
   document.body.appendChild(c);
   const ctx = c.getContext("2d");
-  const N = 150;
+  const N = 140;
   const parts = Array.from({length:N}, () => ({
     x: Math.random()*c.width, y: -10,
     vx:(Math.random()-.5)*4, vy: Math.random()*2+2,
     s: Math.random()*3+2, life: Math.random()*60+40,
-    col: ["#60e9cf","#6aa8ff","#a88bff"][Math.floor(Math.random()*3)]
+    col: Math.random()<.5 ? "#37f2e7" : "#b38aff"
   }));
   let f=0;
   (function tick(){
