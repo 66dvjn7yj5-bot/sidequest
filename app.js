@@ -1,17 +1,13 @@
-// ===== Daily Sidequests – Premium Mobile Edition =====
-// Mobile‑First, mehr Aufgaben pro Tag, Coins/Schwierigkeit/Kategorie sichtbar,
-// Reset‑Timer in hh:mm, Streak‑Flamme, LocalStorage‑State
+// ===== Sidequests – Premium Mobile Edition =====
+// Generierte Fragen/Aufgaben (8/Tag), Coins/XP/Svhw./Kategorie sichtbar,
+// nutzbare Shop-/Inventar-Buttons, Reset‑Timer hh:mm, Streak 🔥, LocalStorage
 
-// ---------------------------
-// Config
-// ---------------------------
-const DAILY_TASK_COUNT = 8; // Anzahl der Aufgaben pro Tag
-const STORAGE_KEY = "dsq_premium_v2";
+const STORAGE_KEY = "sidequests_premium_v3";
+const DAILY_TASK_COUNT = 8;
 
-// ---------------------------
-// Katalog: Aufgaben
-// Kategorie (cat), Schwierigkeit (diff: easy/med/hard), reward.coins/xp
-// ---------------------------
+/* ---------------------------
+   Katalog: Fragen/Aufgaben
+---------------------------- */
 const QUESTS = [
   // Bewegung
   { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
@@ -29,14 +25,13 @@ const QUESTS = [
   { title:"Schreibe einen 2‑Zeilen‑Reim", cat:"Kreativität", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
   { title:"Fotografiere etwas in Blau", cat:"Kreativität", diff:"med", time:"3 Min", reward:{coins:16, xp:12} },
 
-  // Sozial
+  // Soziales
   { title:"Schicke eine nette Nachricht", cat:"Soziales", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
   { title:"Bedanke dich bei jemandem", cat:"Soziales", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
   { title:"Kurzes Telefonat mit Freund:in", cat:"Soziales", diff:"med", time:"5 Min", reward:{coins:20, xp:18} },
 
   // Ordnung
   { title:"Räume eine kleine Fläche auf", cat:"Ordnung", diff:"med", time:"5 Min", reward:{coins:22, xp:20} },
-  { title:"Wäsche zusammenlegen", cat:"Ordnung", diff:"med", time:"7 Min", reward:{coins:24, xp:22} },
   { title:"Mülleimer leeren", cat:"Ordnung", diff:"easy", time:"2 Min", reward:{coins:10, xp:8} },
 
   // Lernen
@@ -44,14 +39,14 @@ const QUESTS = [
   { title:"Lies 1 Absatz eines Artikels", cat:"Lernen", diff:"easy", time:"3 Min", reward:{coins:12, xp:10} },
   { title:"2 Karteikarten wiederholen", cat:"Lernen", diff:"med", time:"4 Min", reward:{coins:18, xp:15} },
 
-  // Humor/Spass
+  // Spaß
   { title:"10 Sek. Freestyle‑Tanz", cat:"Spaß", diff:"easy", time:"1 Min", reward:{coins:12, xp:10} },
   { title:"Erfinde einen absurden Superhelden‑Namen", cat:"Spaß", diff:"easy", time:"2 Min", reward:{coins:12, xp:10} },
 ];
 
-// ---------------------------
-// Shop
-// ---------------------------
+/* ---------------------------
+   Shop
+---------------------------- */
 const SHOP_ITEMS = [
   { id:"hat_mint", name:"Mint‑Hut", type:"hat", price:100, emoji:"🎩", color:"#7cf1c6" },
   { id:"hat_royal", name:"Royal‑Cap", type:"hat", price:140, emoji:"👑", color:"#ffd76d" },
@@ -59,47 +54,34 @@ const SHOP_ITEMS = [
   { id:"acc_band", name:"Stirnband", type:"acc", price:80, emoji:"🎗️", color:"#77b1ff" },
 ];
 
-// ---------------------------
-// Utils
-// ---------------------------
+/* ---------------------------
+   Utils
+---------------------------- */
 const $ = sel => document.querySelector(sel);
-const $$ = sel => document.querySelectorAll(sel);
 const now = () => new Date();
-
-function todayKey(){
-  const d = new Date();
-  return d.toISOString().slice(0,10);
-}
-function nextResetMidnight(){
-  const d = new Date();
-  d.setHours(24,0,0,0);
-  return d;
-}
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function nextResetMidnight(){ const d = new Date(); d.setHours(24,0,0,0); return d; }
 function pickRandom(arr, n){
-  const pool = [...arr];
-  const res = [];
-  while(res.length<n && pool.length){
+  const pool=[...arr], out=[];
+  while(out.length<n && pool.length){
     const i = Math.floor(Math.random()*pool.length);
-    res.push(pool.splice(i,1)[0]);
+    out.push(pool.splice(i,1)[0]);
   }
-  return res;
+  return out;
 }
 function pad2(n){ return n<10 ? "0"+n : ""+n; }
 function timeToHHMM(ms){
   if(ms<=0) return {h:"00", m:"00"};
-  const totalM = Math.floor(ms/60000);
-  const h = Math.floor(totalM/60);
-  const m = totalM % 60;
-  return {h:pad2(h), m:pad2(m)};
+  const tM = Math.floor(ms/60000);
+  return { h: pad2(Math.floor(tM/60)), m: pad2(tM%60) };
 }
 
-// ---------------------------
-// State
-// ---------------------------
+/* ---------------------------
+   State
+---------------------------- */
 let state = loadState();
 
 function defaultState(){
-  const resetAt = nextResetMidnight().toISOString();
   return {
     coins: 0,
     xp: 0,
@@ -107,13 +89,12 @@ function defaultState(){
     streak: 0,
     lastDay: todayKey(),
     rerollAvailable: true,
-    resetAt,
+    resetAt: nextResetMidnight().toISOString(),
     quests: generateDailyQuests(),
     inventory: [],
     equipped: { hat:null, acc:null }
   };
 }
-
 function generateDailyQuests(){
   const chosen = pickRandom(QUESTS, DAILY_TASK_COUNT).map((q,i)=>({
     id: `${todayKey()}_${i}`,
@@ -121,46 +102,41 @@ function generateDailyQuests(){
     done:false,
     claimed:false
   }));
-  // Sortiere leicht: harte Aufgaben unten, für „sanften Einstieg“
-  const weight = d => d==="easy"?1: d==="med"?2: 3;
-  chosen.sort((a,b)=> weight(a.diff)-weight(b.diff));
+  const w = d => d==="easy"?1: d==="med"?2: 3;
+  chosen.sort((a,b)=> w(a.diff)-w(b.diff)); // sanfter Einstieg
   return chosen;
 }
-
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultState();
     const s = JSON.parse(raw);
-    // Reset prüfen
+    // Reset?
     const r = s.resetAt ? new Date(s.resetAt) : nextResetMidnight();
     if(now() >= r){
-      // Streak aktualisieren
       const prev = new Date(s.lastDay || todayKey());
       const today = new Date(todayKey());
       const delta = Math.round((today - prev)/86400000);
-      if(delta===1) s.streak = (s.streak||0) + 1;
+      if(delta===1) s.streak = (s.streak||0)+1;
       else if(delta>1) s.streak = 0;
 
       s.lastDay = todayKey();
       s.rerollAvailable = true;
       s.resetAt = nextResetMidnight().toISOString();
       s.quests = generateDailyQuests();
-      s.level = 1 + Math.floor((s.xp||0)/100);
     }
+    s.level = 1 + Math.floor((s.xp||0)/100);
     return s;
   }catch(e){
     console.warn("State load error", e);
     return defaultState();
   }
 }
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-// ---------------------------
-// DOM Refs
-// ---------------------------
+/* ---------------------------
+   DOM refs
+---------------------------- */
 const $coins = $("#coins");
 const $xp = $("#xp");
 const $level = $("#level");
@@ -175,10 +151,12 @@ const $shop = $("#shop");
 const $inventory = $("#inventory");
 const $equipped = $("#equipped");
 const $unequip = $("#unequip");
+const $hatSVG = document.getElementById("hat");
+const $accSVG = document.getElementById("acc");
 
-// ---------------------------
-// Render
-// ---------------------------
+/* ---------------------------
+   Render
+---------------------------- */
 function renderStatus(){
   $coins.textContent = state.coins;
   $xp.textContent = state.xp;
@@ -187,14 +165,12 @@ function renderStatus(){
   $streak.textContent = state.streak;
 
   const r = new Date(state.resetAt);
-  const ms = Math.max(0, r - now());
-  const {h,m} = timeToHHMM(ms);
+  const {h,m} = timeToHHMM(Math.max(0, r - now()));
   $resetH.textContent = h;
   $resetM.textContent = m;
 
   $tasksCount.textContent = `${state.quests.filter(q=>q.done).length}/${state.quests.length} erledigt`;
 }
-
 function diffBadge(diff){
   if(diff==="easy") return `<span class="badge b-diff-easy"><span class="dot" style="background:#3ed795"></span>Leicht</span>`;
   if(diff==="med")  return `<span class="badge b-diff-med"><span class="dot" style="background:#ffd76d"></span>Mittel</span>`;
@@ -202,16 +178,14 @@ function diffBadge(diff){
 }
 function taskRow(q){
   const coins = `<span class="badge b-coins">💰 ${q.reward.coins} Coins</span>`;
-  const cat = `<span class="badge b-cat">#${q.cat}</span>`;
   const dif = diffBadge(q.diff);
+  const cat = `<span class="badge b-cat">#${q.cat}</span>`;
   const time = `<span class="badge b-cat">⏱ ${q.time}</span>`;
-
   const action = !q.done
     ? `<button class="btn btn-primary" data-act="done" data-id="${q.id}">Erledigt</button>`
     : (!q.claimed
       ? `<button class="btn btn-primary" data-act="claim" data-id="${q.id}">Belohnung</button>`
       : `<span class="badge b-cat">✓ Abgeschlossen</span>`);
-
   return `
     <div class="task ${q.done?"done":""}">
       <div>
@@ -225,7 +199,6 @@ function taskRow(q){
 function renderQuests(){
   $questList.innerHTML = state.quests.map(taskRow).join("");
 }
-
 function renderShop(){
   $shop.innerHTML = SHOP_ITEMS.map(item=>{
     const owned = state.inventory.includes(item.id);
@@ -264,15 +237,13 @@ function renderEquipped(){
   if(accItem) names.push(accItem.name);
   $equipped.textContent = names.length? names.join(", "): "—";
 
-  const hatSVG = document.getElementById("hat");
-  const accSVG = document.getElementById("acc");
-  hatSVG.style.display = hatItem ? "block" : "none";
-  accSVG.style.display = accItem ? "block" : "none";
+  $hatSVG.style.display = hatItem ? "block" : "none";
+  $accSVG.style.display = accItem ? "block" : "none";
   if(hatItem){
-    hatSVG.querySelector("path").setAttribute("fill", hatItem.color || "#7cf1c6");
+    $hatSVG.querySelector("path").setAttribute("fill", hatItem.color || "#7cf1c6");
   }
   if(accItem){
-    accSVG.querySelector("rect").setAttribute("fill", accItem.color || "#8aa9ff");
+    $accSVG.querySelector("rect").setAttribute("fill", accItem.color || "#8aa9ff");
   }
 }
 function renderAll(){
@@ -284,9 +255,9 @@ function renderAll(){
 }
 renderAll();
 
-// ---------------------------
-// Events
-// ---------------------------
+/* ---------------------------
+   Events
+---------------------------- */
 $questList.addEventListener("click", (e)=>{
   const btn = e.target.closest("button");
   if(!btn) return;
@@ -301,11 +272,10 @@ $questList.addEventListener("click", (e)=>{
   }else if(act==="claim"){
     if(!q.done || q.claimed) return;
     q.claimed = true;
-    const {coins,xp} = q.reward;
-    state.coins += coins;
-    state.xp += xp;
+    state.coins += q.reward.coins;
+    state.xp += q.reward.xp;
     celebrate();
-    toast(`Belohnung: +${coins} Coins • +${xp} XP`, "success");
+    toast(`Belohnung: +${q.reward.coins} Coins • +${q.reward.xp} XP`, "success");
   }
   saveState(); renderAll();
 });
@@ -317,7 +287,7 @@ $reroll.addEventListener("click", ()=>{
   }
   state.quests = generateDailyQuests();
   state.rerollAvailable = false;
-  toast("Neue Aufgaben geladen!", "success");
+  toast("Neue Fragen geladen!", "success");
   saveState(); renderAll();
 });
 
@@ -350,13 +320,12 @@ $unequip.addEventListener("click", ()=>{
   saveState(); renderAll();
 });
 
-// ---------------------------
-// Timer & Streak Handling
-// ---------------------------
+/* ---------------------------
+   Timer & Streak Handling
+---------------------------- */
 function checkReset(){
   const r = new Date(state.resetAt);
   if(now() >= r){
-    // Streak + neue Quests
     const prev = new Date(state.lastDay || todayKey());
     const today = new Date(todayKey());
     const delta = Math.round((today - prev)/86400000);
@@ -367,7 +336,7 @@ function checkReset(){
     state.rerollAvailable = true;
     state.resetAt = nextResetMidnight().toISOString();
     state.quests = generateDailyQuests();
-    toast("Neuer Tag, neue Aufgaben!", "success");
+    toast("Neuer Tag, neue Fragen!", "success");
     saveState(); renderAll();
   }else{
     renderStatus();
@@ -375,13 +344,11 @@ function checkReset(){
 }
 setInterval(checkReset, 15_000);
 
-// ---------------------------
-// UX: Toast & Confetti
-// ---------------------------
+/* ---------------------------
+   UX: Toast & Confetti
+---------------------------- */
 function toast(msg, type="info"){
   const el = document.createElement("div");
-  el.className = "toast";
-  el.textContent = msg;
   Object.assign(el.style, {
     position:"fixed", left:"50%", bottom:"18px", transform:"translateX(-50%)",
     background: type==="success" ? "linear-gradient(135deg,#66f0d2,#2aa484)" :
@@ -392,6 +359,7 @@ function toast(msg, type="info"){
     fontWeight:"800", letterSpacing:".2px", zIndex:9999,
     boxShadow:"0 10px 30px rgba(0,0,0,.35)"
   });
+  el.textContent = msg;
   document.body.appendChild(el);
   setTimeout(()=>{ el.style.opacity="0"; el.style.transition="opacity .4s"; }, 1500);
   setTimeout(()=> el.remove(), 2100);
