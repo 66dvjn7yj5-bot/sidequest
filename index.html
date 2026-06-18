@@ -2,27 +2,27 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>Sidequests – Premium</title>
+  <title>Sidequests – Cyber</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="dark light" />
-  <meta name="theme-color" content="#0b0e17" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#0a0914" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="appbar">
     <div class="appbar-inner">
       <div class="brand">
-        <div class="mark">◆</div>
+        <div class="mark">◇</div>
         <div>
           <h1>Sidequests</h1>
-          <div class="brand-sub">Daily Goals · Premium</div>
+          <div class="brand-sub">Neon Daily Protocol</div>
         </div>
       </div>
       <div class="status">
-        <div class="chip"><span aria-hidden="true">🪙</span><span id="coins">0</span></div>
-        <div class="chip"><span aria-hidden="true">✨</span><span id="xp">0</span></div>
-        <div class="chip"><span aria-hidden="true">⬢</span><span id="level">1</span></div>
-        <div class="chip streak"><span aria-hidden="true">🔥</span><span id="streak">0</span></div>
+        <div class="chip neon"><span>🪙</span><span id="coins">0</span></div>
+        <div class="chip neon"><span>✨</span><span id="xp">0</span></div>
+        <div class="chip neon"><span>⬢</span><span id="level">1</span></div>
+        <div class="chip streak"><span>🔥</span><span id="streak">0</span></div>
       </div>
     </div>
   </header>
@@ -35,7 +35,7 @@
       </div>
       <div class="timer-right">
         <button id="reroll" class="btn btn-reroll">
-          <span class="btn-ico" aria-hidden="true">🔄</span>
+          <span class="btn-ico" aria-hidden="true">⟳</span>
           Neue Fragen
         </button>
       </div>
@@ -47,45 +47,13 @@
         <span id="tasksCount" class="muted small"></span>
       </div>
       <div id="questList" class="list" aria-live="polite"></div>
-      <div class="panel-foot muted small">
-        Sammle Coins & XP; halte deinen 🔥‑Streak durch tägliche Besuche.
+      <div class="panel-foot small muted">
+        Halte deinen 🔥‑Streak durch tägliche Besuche. Reroll ist jederzeit möglich.
       </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head">
-        <h2>Shop & Avatar</h2>
-      </div>
-
-      <div class="avatar-card">
-        <div class="avatar" aria-label="Avatar">
-          <svg class="av-hat" id="hat" width="90" height="50" viewBox="0 0 100 60" aria-hidden="true">
-            <path d="M15 45 Q50 5 85 45 Z" fill="#7cf1c6" stroke="#0b0f1b" stroke-width="3"/>
-            <rect x="25" y="43" width="50" height="8" fill="#0b0f1b" opacity=".6"/>
-          </svg>
-          <div class="av-face">
-            <div class="av-eyes"><div class="eye"></div><div class="eye"></div></div>
-          </div>
-          <div class="av-mouth"></div>
-          <svg class="av-accessory" id="acc" width="120" height="40" viewBox="0 0 120 40" aria-hidden="true">
-            <rect x="20" y="10" width="80" height="20" rx="10" fill="#8aa9ff" stroke="#0b0f1b" stroke-width="3"/>
-          </svg>
-        </div>
-        <div class="equip-row">
-          <div class="equip-label">Ausgerüstet:</div>
-          <div id="equipped" class="equip-value">—</div>
-          <button id="unequip" class="btn btn-ghost small">Ablegen</button>
-        </div>
-      </div>
-
-      <div class="subhead">Shop</div>
-      <div id="shop" class="shop" aria-live="polite"></div>
-
-      <div class="subhead">Inventar</div>
-      <div id="inventory" class="inventory" aria-live="polite"></div>
     </section>
   </main>
 
+  <div class="scanlines" aria-hidden="true"></div>
   <script src="app.js"></script>
 </body>
 </html>
