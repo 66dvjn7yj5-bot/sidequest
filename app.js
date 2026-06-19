@@ -1,86 +1,127 @@
 // ===== Sidequests – Cyberpunk Edition =====
-// Fix: "Gesamt erledigt" zählt zuverlässig + klarere Aufgaben
-// - größerer Pool (präzise Anweisungen, besonders "Schwer")
-// - tägliche Auswahl: 3 easy, 3 medium, 2 hard (Fallback falls nötig)
-// - permanenter Zähler "Gesamt erledigt" (increment beim Einlösen +XP)
+// v5: neue Kategorien (Ernährung, Haushalt, Digital Detox, Finanzen, Sprache),
+// klarere Aufgaben, Fix für "Gesamt erledigt" Anzeige
+// - tägliche Auswahl: 3 easy, 3 medium, 2 hard (Fallback bei Bedarf)
+// - permanenter Zähler "Gesamt erledigt" (Increment beim Einlösen +XP)
 // - XP 0–100 pro Level, Level-Up-Animation
 // - Reroll 1×/Tag, täglicher Reset um Mitternacht
 
-const STORAGE_KEY = "sidequests_cyber_pool_v4";
+const STORAGE_KEY = "sidequests_cyber_pool_v5";
 
-/* Aufgaben-Katalog – erweitert und präzisiert */
+/* Aufgaben-Katalog – erweitert und präzisiert, inkl. neuer Kategorien */
 const QUESTS = [
   // Bewegung – LEICHT
-  { title:"Kniebeugen: 3×10", detail:"3 Sätze à 10 Wiederholungen, 30s Pause", cat:"Bewegung", diff:"easy", time:"5 Min", xp:10 },
+  { title:"Kniebeugen: 3×10", detail:"3 Sätze à 10, 30s Pause", cat:"Bewegung", diff:"easy", time:"5 Min", xp:10 },
   { title:"Wandsitz: 2×30s", detail:"Zwei Durchgänge, 30s Pause", cat:"Bewegung", diff:"easy", time:"3 Min", xp:10 },
-  { title:"Jumping Jacks: 2×20", detail:"Zwei Durchgänge à 20, 20s Pause", cat:"Bewegung", diff:"easy", time:"3 Min", xp:10 },
-  { title:"Gehen: 600 Schritte", detail:"Schrittzähler nutzen; ca. 5 Minuten", cat:"Bewegung", diff:"easy", time:"5 Min", xp:10 },
-  { title:"Mobilisieren: Schultern 2×20 Kreise", detail:"Vorwärts & rückwärts je 20", cat:"Bewegung", diff:"easy", time:"3 Min", xp:8 },
+  { title:"Jumping Jacks: 2×20", detail:"2×20, 20s Pause", cat:"Bewegung", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Gehen: 600 Schritte", detail:"Schrittzähler; ca. 5 Minuten", cat:"Bewegung", diff:"easy", time:"5 Min", xp:10 },
+  { title:"Schultern: 2×20 Kreise", detail:"vorwärts & rückwärts", cat:"Bewegung", diff:"easy", time:"3 Min", xp:8 },
 
   // Bewegung – MITTEL
   { title:"Plank: 3×30s", detail:"Ellenbogenstütz, 30s Pause", cat:"Bewegung", diff:"med", time:"5 Min", xp:15 },
-  { title:"Ausfallschritte: 3×12 (gesamt)", detail:"Je Bein 6 Wdh., 45s Pause", cat:"Bewegung", diff:"med", time:"6 Min", xp:18 },
-  { title:"Liegestütze: 3×10", detail:"Auf Knien oder voll, 45s Pause", cat:"Bewegung", diff:"med", time:"6–7 Min", xp:18 },
-  { title:"Burpees light: 2×12", detail:"Ohne Liegestütz, 45s Pause", cat:"Bewegung", diff:"med", time:"5 Min", xp:18 },
+  { title:"Ausfallschritte: 3×12 (gesamt)", detail:"je Bein 6, 45s Pause", cat:"Bewegung", diff:"med", time:"6 Min", xp:18 },
+  { title:"Liegestütze: 3×10", detail:"auf Knien oder voll, 45s Pause", cat:"Bewegung", diff:"med", time:"6–7 Min", xp:18 },
+  { title:"Burpees light: 2×12", detail:"ohne Liegestütz, 45s Pause", cat:"Bewegung", diff:"med", time:"5 Min", xp:18 },
   { title:"Kniehebelauf: 3×45s", detail:"45s on / 30s off", cat:"Bewegung", diff:"med", time:"6–7 Min", xp:15 },
 
   // Bewegung – SCHWER
-  { title:"Zügig gehen/joggen: 1 km", detail:"Tempo so, dass du sprechen kannst", cat:"Bewegung", diff:"hard", time:"10–15 Min", xp:30 },
-  { title:"Intervalle: 6×(30s schnell/30s locker)", detail:"Start mit Aufwärmen 2 Min", cat:"Bewegung", diff:"hard", time:"12–14 Min", xp:32 },
-  { title:"Treppen: 10 Stockwerke gesamt", detail:"Auf- und abwärts zählen", cat:"Bewegung", diff:"hard", time:"10–12 Min", xp:32 },
-  { title:"Tabata Ganzkörper: 8 Runden 20/10", detail:"Air Squats & Mountain Climbers", cat:"Bewegung", diff:"hard", time:"4–6 Min", xp:30 },
-  { title:"Gehen: 2 km zügig", detail:"Durchziehen ohne lange Pause", cat:"Bewegung", diff:"hard", time:"20–24 Min", xp:34 },
+  { title:"Zügig gehen/joggen: 1 km", detail:"Tempo: Gespräch möglich", cat:"Bewegung", diff:"hard", time:"10–15 Min", xp:30 },
+  { title:"Intervall: 6×(30s schnell/30s locker)", detail:"2 Min Aufwärmen", cat:"Bewegung", diff:"hard", time:"12–14 Min", xp:32 },
+  { title:"Treppen: 12–15 Stockwerke", detail:"hoch + runter zählen", cat:"Bewegung", diff:"hard", time:"10–15 Min", xp:34 },
+  { title:"Tabata: 8 Runden 20/10", detail:"Air Squats & Mountain Climbers", cat:"Bewegung", diff:"hard", time:"4–6 Min", xp:30 },
+  { title:"Gehen: 2 km zügig", detail:"durchziehen, wenig Pause", cat:"Bewegung", diff:"hard", time:"20–24 Min", xp:34 },
   { title:"Kraftzirkel: 4 Runden", detail:"15 Squats + 10 Pushups + 20 JJ", cat:"Bewegung", diff:"hard", time:"12–15 Min", xp:34 },
 
   // Achtsamkeit – LEICHT
   { title:"Atemfokus: 1 Minute", detail:"4s ein – 4s aus", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
-  { title:"Dankbarkeit: 3 Notizen", detail:"3 konkrete, heutige Dinge", cat:"Achtsamkeit", diff:"easy", time:"3 Min", xp:10 },
-  { title:"Body-Scan: 45s", detail:"Von Kopf bis Fuß, langsam", cat:"Achtsamkeit", diff:"easy", time:"1–2 Min", xp:10 },
+  { title:"Dankbarkeit: 3 Notizen", detail:"heute, konkret", cat:"Achtsamkeit", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Body-Scan: 45s", detail:"Kopf → Fuß, langsam", cat:"Achtsamkeit", diff:"easy", time:"1–2 Min", xp:10 },
 
   // Achtsamkeit – MITTEL
-  { title:"Digital Detox: 5 Minuten", detail:"Handy weg, Blick aus dem Fenster", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
-  { title:"Box-Breathing: 2×(4‑4‑4‑4)", detail:"Ein‑halten‑aus‑halten", cat:"Achtsamkeit", diff:"med", time:"3–4 Min", xp:15 },
+  { title:"Digitaler Abstand: 5 Min", detail:"kein Screen, Blick raus", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
+  { title:"Box-Breathing: 2×(4‑4‑4‑4)", detail:"ein‑halten‑aus‑halten", cat:"Achtsamkeit", diff:"med", time:"3–4 Min", xp:15 },
   { title:"Mini‑Meditation: 1 Session", detail:"App/Video ≤5 Min", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
 
   // Kreativität – LEICHT
-  { title:"Doodle: 3 kleine Skizzen", detail:"3 Objekte in 3 Minuten", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
-  { title:"Zwei‑Zeiler dichten", detail:"Reim mit einem Alltagsding", cat:"Kreativität", diff:"easy", time:"2–3 Min", xp:10 },
-  { title:"Foto-Challenge: Farbe Blau", detail:"1 Motiv in Blau", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Doodle: 3 Skizzen", detail:"3 Objekte in 3 Min", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Zwei‑Zeiler dichten", detail:"Reim + Alltagsding", cat:"Kreativität", diff:"easy", time:"2–3 Min", xp:10 },
+  { title:"Foto: Farbe Blau", detail:"1 Motiv", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
 
   // Kreativität – MITTEL
-  { title:"Freewriting: 70 Wörter", detail:"Ohne Stoppen, Thema frei", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
-  { title:"Logo‑Skizzen: 3 Varianten", detail:"5 Minuten Timer", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
+  { title:"Freewriting: 100 Wörter", detail:"ohne stoppen, Thema frei", cat:"Kreativität", diff:"med", time:"5–7 Min", xp:15 },
+  { title:"Logo‑Skizzen: 5 Varianten", detail:"5 Minuten Timer", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
 
   // Soziales – LEICHT
-  { title:"Nette Nachricht senden", detail:"Kurzer Check‑in an jemanden", cat:"Soziales", diff:"easy", time:"2–3 Min", xp:10 },
-  { title:"Dank aussprechen", detail:"Eine konkrete Person, ein Anlass", cat:"Soziales", diff:"easy", time:"2 Min", xp:10 },
+  { title:"Nette Nachricht senden", detail:"kurzer Check‑in", cat:"Soziales", diff:"easy", time:"2–3 Min", xp:10 },
+  { title:"Dank aussprechen", detail:"Person + Anlass", cat:"Soziales", diff:"easy", time:"2 Min", xp:10 },
 
   // Soziales – MITTEL
-  { title:"Kurz telefonieren", detail:"2–5 Minuten Smalltalk", cat:"Soziales", diff:"med", time:"5 Min", xp:18 },
-  { title:"Mini‑Treffen planen", detail:"Termin vorschlagen + 1 Option", cat:"Soziales", diff:"med", time:"5 Min", xp:15 },
+  { title:"Kurz telefonieren", detail:"2–5 Minuten", cat:"Soziales", diff:"med", time:"5 Min", xp:18 },
+  { title:"Mini‑Treffen planen", detail:"Zeitfenster + Ort", cat:"Soziales", diff:"med", time:"5 Min", xp:15 },
 
   // Ordnung – LEICHT
-  { title:"Mülleimer leeren", detail:"Küche oder Zimmer", cat:"Ordnung", diff:"easy", time:"2 Min", xp:8 },
-  { title:"Schreibtisch wischen", detail:"Fläche freiräumen, wischen", cat:"Ordnung", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Mülleimer leeren", detail:"Küche/Zimmer", cat:"Ordnung", diff:"easy", time:"2 Min", xp:8 },
+  { title:"Schreibtisch wischen", detail:"Fläche freiräumen", cat:"Ordnung", diff:"easy", time:"3 Min", xp:10 },
 
   // Ordnung – MITTEL
-  { title:"Hotspot aufräumen: 1 Zone", detail:"z.B. Schublade/Regalbrett", cat:"Ordnung", diff:"med", time:"5–7 Min", xp:20 },
-  { title:"E‑Mail: 10 Mails verarbeiten", detail:"Löschen/Archivieren/Antworten", cat:"Ordnung", diff:"med", time:"5–7 Min", xp:15 },
+  { title:"Hotspot: 1 Zone", detail:"z.B. Schublade/Regalbrett", cat:"Ordnung", diff:"med", time:"5–7 Min", xp:20 },
+  { title:"E‑Mail: 10 Mails verarbeiten", detail:"löschen/archivieren/antworten", cat:"Ordnung", diff:"med", time:"5–7 Min", xp:15 },
 
   // Lernen – LEICHT
-  { title:"1 neues Wort lernen", detail:"Definition & Beispiel", cat:"Lernen", diff:"easy", time:"2–3 Min", xp:10 },
+  { title:"1 neues Wort", detail:"Definition + Beispiel", cat:"Lernen", diff:"easy", time:"2–3 Min", xp:10 },
   { title:"1 Absatz lesen", detail:"Kernaussage notieren", cat:"Lernen", diff:"easy", time:"3 Min", xp:10 },
 
   // Lernen – MITTEL
-  { title:"Karteikarten: 5 Stück wiederholen", detail:"Aktives Recall", cat:"Lernen", diff:"med", time:"4–6 Min", xp:15 },
+  { title:"Karteikarten: 5 wiederholen", detail:"aktives Recall", cat:"Lernen", diff:"med", time:"4–6 Min", xp:15 },
   { title:"Erklärvideo ≤5 Min", detail:"1 Erkenntnis notieren", cat:"Lernen", diff:"med", time:"5 Min", xp:15 },
 
   // Spaß – LEICHT
   { title:"Freestyle‑Tanz: 20s", detail:"Musik an, bewegen", cat:"Spaß", diff:"easy", time:"1 Min", xp:10 },
-  { title:"Absurder Superhelden‑Name", detail:"Figur + Fähigkeit erfinden", cat:"Spaß", diff:"easy", time:"2 Min", xp:10 },
+  { title:"1‑Satz‑Witz schreiben", detail:"Thema: Tier", cat:"Spaß", diff:"easy", time:"2 Min", xp:10 },
 
   // Spaß – MITTEL
-  { title:"Mini‑Rätsel lösen", detail:"Sudoku/KenKen/Wordle", cat:"Spaß", diff:"med", time:"5 Min", xp:15 },
+  { title:"Mini‑Rätsel lösen", detail:"Sudoku/Nonogramm ≤10 Min", cat:"Spaß", diff:"med", time:"5–10 Min", xp:15 },
+
+  // Ernährung – LEICHT (NEU)
+  { title:"1 Glas Wasser trinken", detail:"bewusst, ohne Ablenkung", cat:"Ernährung", diff:"easy", time:"1 Min", xp:8 },
+  { title:"1 Obstportion", detail:"z.B. Apfel/Banane", cat:"Ernährung", diff:"easy", time:"2 Min", xp:10 },
+  { title:"Snack‑Check", detail:"1 zuckerigen Snack ersetzen", cat:"Ernährung", diff:"easy", time:"2–3 Min", xp:10 },
+
+  // Ernährung – MITTEL (NEU)
+  { title:"Protein‑Check", detail:"1 proteinreiche Portion (z.B. Joghurt)", cat:"Ernährung", diff:"med", time:"5 Min", xp:15 },
+  { title:"Mahlzeit planen", detail:"1 gesunde Mahlzeit für morgen", cat:"Ernährung", diff:"med", time:"5–7 Min", xp:15 },
+
+  // Haushalt – LEICHT (NEU)
+  { title:"Spülzyklus kurz", detail:"5 Teller/Gläser spülen", cat:"Haushalt", diff:"easy", time:"5 Min", xp:10 },
+  { title:"Boden: 2 m² kehren", detail:"kleine Fläche", cat:"Haushalt", diff:"easy", time:"4 Min", xp:10 },
+
+  // Haushalt – MITTEL (NEU)
+  { title:"Wäsche: 1 Korb falten", detail:"nur falten + wegräumen", cat:"Haushalt", diff:"med", time:"10–12 Min", xp:18 },
+  { title:"Bad: Waschbecken reinigen", detail:"inkl. Spiegel wischen", cat:"Haushalt", diff:"med", time:"8–10 Min", xp:18 },
+
+  // Digital Detox – LEICHT (NEU)
+  { title:"Benachrichtigungen prüfen", detail:"1 App stummschalten", cat:"Digital Detox", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Homescreen aufräumen", detail:"2 Apps in Ordner verschieben", cat:"Digital Detox", diff:"easy", time:"3–4 Min", xp:10 },
+
+  // Digital Detox – MITTEL (NEU)
+  { title:"Social Break: 10 Min", detail:"keine sozialen Medien", cat:"Digital Detox", diff:"med", time:"10 Min", xp:15 },
+  { title:"Abos checken", detail:"1 unnötiges Abo kündigen", cat:"Digital Detox", diff:"med", time:"8–12 Min", xp:18 },
+
+  // Finanzen – LEICHT (NEU)
+  { title:"1 Ausgabe notieren", detail:"Betrag + Kategorie", cat:"Finanzen", diff:"easy", time:"2 Min", xp:10 },
+  { title:"Konto‑Check", detail:"Saldo prüfen, 1 Auffälligkeit notieren", cat:"Finanzen", diff:"easy", time:"3 Min", xp:10 },
+
+  // Finanzen – MITTEL (NEU)
+  { title:"Budget 5 Min updaten", detail:"eine Kategorie anpassen", cat:"Finanzen", diff:"med", time:"5 Min", xp:15 },
+  { title:"Sparziel definieren", detail:"1 Ziel + Monatsbetrag festlegen", cat:"Finanzen", diff:"med", time:"5–7 Min", xp:15 },
+
+  // Sprache – LEICHT (NEU)
+  { title:"Vokabeln: 5 Wörter", detail:"mit 1 Beispielsatz", cat:"Sprache", diff:"easy", time:"5 Min", xp:10 },
+  { title:"Aussprache: 2 Sätze laut", detail:"z.B. Podcast nachsprechen", cat:"Sprache", diff:"easy", time:"3–4 Min", xp:10 },
+
+  // Sprache – MITTEL (NEU)
+  { title:"Mini‑Dialog schreiben", detail:"6 Zeilen, Alltagsthema", cat:"Sprache", diff:"med", time:"6–8 Min", xp:15 },
+  { title:"Kurztext lesen", detail:"1 Absatz + 3 Fragen beantworten", cat:"Sprache", diff:"med", time:"8–10 Min", xp:18 },
 ];
 
 /* Utils */
@@ -181,7 +222,7 @@ function loadState(){
 }
 function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-/* DOM refs (defensiv) */
+/* DOM refs */
 const $xp = $("#xp");
 const $levelValue = $("#levelValue");
 const $levelCard = $("#levelCard");
@@ -371,9 +412,9 @@ function playClick(){
 
 /* Hover Particles */
 const canvas = document.getElementById("hoverParticles");
-const ctx = canvas.getContext("2d");
+const ctx = canvas ? canvas.getContext("2d") : null;
 function resizeCanvas(){
-  if(!canvas) return;
+  if(!canvas || !ctx) return;
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
@@ -382,7 +423,7 @@ resizeCanvas();
 
 const particles = [];
 document.addEventListener("mousemove", (e)=>{
-  if(!canvas) return;
+  if(!canvas || !ctx) return;
   for(let i=0;i<3;i++){
     particles.push({
       x:e.clientX, y:e.clientY,
@@ -393,7 +434,7 @@ document.addEventListener("mousemove", (e)=>{
   }
 });
 (function tick(){
-  if(!canvas) return;
+  if(!canvas || !ctx) return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
   for(let i=particles.length-1;i>=0;i--){
     const p = particles[i];
