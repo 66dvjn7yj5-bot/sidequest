@@ -235,6 +235,9 @@ body::before{
 .b-diff-easy{ color:#7bffc8; border-color: rgba(123,255,200,.35) }
 .b-diff-med{ color:#ffd86b; border-color: rgba(255,216,107,.38) }
 .b-diff-hard{ color:#ff8cb8; border-color: rgba(255,140,184,.38) }
+/* Super: extra knallig */
+.b-diff-super{ color:#ff6ad5; border-color: rgba(255,106,213,.55); box-shadow: 0 0 18px rgba(255,106,213,.20) inset }
+
 .b-cat{ color:#bfe4ff; border-color: rgba(191,228,255,.32) }
 
 /* XP Bar */
