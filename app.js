@@ -1,26 +1,35 @@
-// ===== Sidequests – Cyberpunk Edition (größerer Aufgabenpool + 2× hard garantiert) =====
+// ===== Sidequests – Cyberpunk Edition =====
+// - größerer Aufgabenpool (inkl. vieler „hard“-Aufgaben)
+// - tägliche Auswahl: 3 easy, 3 medium, 2 hard (Fallback falls nötig)
+// - permanenter Zähler "Gesamt erledigt"
+// - XP 0–100 pro Level, Level-Up-Animation
+// - Reroll 1×/Tag, täglicher Reset um Mitternacht
 
-const STORAGE_KEY = "sidequests_cyber_pool_v2";
+const STORAGE_KEY = "sidequests_cyber_pool_v3";
 
-/* Aufgaben-Katalog – deutlich erweitert */
+/* Aufgaben-Katalog – erweitert */
 const QUESTS = [
   // Bewegung – easy
   { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
   { title:"15 Ausfallschritte (gesamt)", cat:"Bewegung", diff:"easy", time:"3 Min", xp:10 },
   { title:"30 Sekunden Wandsitz", cat:"Bewegung", diff:"easy", time:"1 Min", xp:10 },
   { title:"20 Jumping Jacks", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
+  { title:"10 Sekunden Schulterkreisen", cat:"Bewegung", diff:"easy", time:"1 Min", xp:8 },
 
   // Bewegung – medium
   { title:"30‑Sekunden Plank", cat:"Bewegung", diff:"med", time:"1 Min", xp:15 },
   { title:"3×10 Sekunden Dehnen (Beine)", cat:"Bewegung", diff:"med", time:"3 Min", xp:15 },
   { title:"15 Liegestütze (gern auf Knien)", cat:"Bewegung", diff:"med", time:"4 Min", xp:18 },
   { title:"10 Burpees light", cat:"Bewegung", diff:"med", time:"4 Min", xp:18 },
+  { title:"Kniehebelauf 60 Sekunden", cat:"Bewegung", diff:"med", time:"1 Min", xp:15 },
 
   // Bewegung – hard
   { title:"1 km Spaziergang/Joggen", cat:"Bewegung", diff:"hard", time:"12–15 Min", xp:30 },
   { title:"Intervall: 5×(30s schnell/30s langsam)", cat:"Bewegung", diff:"hard", time:"10 Min", xp:30 },
   { title:"Treppen-Challenge: 10 Stockwerke gesamt", cat:"Bewegung", diff:"hard", time:"10–12 Min", xp:32 },
   { title:"Tabata 4 Min (20/10s, 8 Runden)", cat:"Bewegung", diff:"hard", time:"4 Min", xp:28 },
+  { title:"2 km zügig gehen", cat:"Bewegung", diff:"hard", time:"20–24 Min", xp:34 },
+  { title:"4 Sätze: 15 Squats/10 Pushups", cat:"Bewegung", diff:"hard", time:"10–12 Min", xp:32 },
 
   // Achtsamkeit – easy
   { title:"1 Minute bewusst atmen", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
@@ -97,16 +106,17 @@ function timeToHHMM(ms){
 let state = loadState();
 function defaultState(){
   return {
-    xp: 0,          // XP innerhalb des aktuellen Levels (0–100)
-    level: 1,       // aktuelles Level (1,2,3,…)
+    xp: 0,                // XP innerhalb des aktuellen Levels (0–100)
+    level: 1,             // aktuelles Level
     lastDay: todayKey(),
     resetAt: nextResetMidnight().toISOString(),
     rerolledForDay: false, // 1×/Tag-Limit
     quests: generateDailyQuestsCategorized(),
+    totalDone: 0,         // NEU: Gesamt erledigte Aufgaben (persistent)
   };
 }
 
-/* Generiert genau 3 easy, 3 med, 2 hard – robust */
+/* Generiert 3 easy, 3 med, 2 hard – robust */
 function generateDailyQuestsCategorized(){
   const easy = QUESTS.filter(q=>q.diff==="easy");
   const med  = QUESTS.filter(q=>q.diff==="med");
@@ -145,6 +155,7 @@ function loadState(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultState();
     const s = JSON.parse(raw);
+
     const r = s.resetAt ? new Date(s.resetAt) : nextResetMidnight();
     if(now() >= r){
       s.lastDay = todayKey();
@@ -152,12 +163,15 @@ function loadState(){
       s.quests = generateDailyQuestsCategorized();
       s.rerolledForDay = false;
     }
-    // Safety
+
+    // Safety/Defaults
     s.xp = Math.max(0, Math.min(100, s.xp|0));
     s.level = Math.max(1, s.level|0);
     if(!Array.isArray(s.quests) || s.quests.length===0){
       s.quests = generateDailyQuestsCategorized();
     }
+    if(typeof s.totalDone !== "number") s.totalDone = 0;
+
     return s;
   }catch(e){
     console.warn("State load error", e);
@@ -178,6 +192,7 @@ const $reroll = $("#reroll");
 const $audioClick = $("#uiClick");
 const $xpFill = $("#xpFill");
 const $nextLevelInfo = $("#nextLevelInfo");
+const $totalDone = $("#totalDone"); // NEU
 
 /* Filter state */
 let currentFilter = "all";
@@ -200,6 +215,8 @@ function renderStatus(){
 
   $reroll.disabled = !!state.rerolledForDay;
   $reroll.title = state.rerolledForDay ? "Reroll bereits genutzt (morgen wieder)" : "Neue Fragen (1×/Tag)";
+
+  if($totalDone) $totalDone.textContent = `${state.totalDone} gesamt`;
 }
 function diffBadge(diff){
   if(diff==="easy") return `<span class="badge b-diff-easy"><span class="dot" style="background:#7bffc8"></span>Leicht</span>`;
@@ -254,6 +271,15 @@ $questList.addEventListener("click", (e)=>{
     if(!q.done || q.claimed) return;
     q.claimed = true;
 
+    // NEU: Gesamtzähler hochzählen
+    state.totalDone = (state.totalDone || 0) + 1;
+
+    // Optional kleiner Pulse auf dem Chip
+    if($totalDone){
+      const chip = $totalDone.parentElement;
+      chip.classList.remove("pulse"); void chip.offsetWidth; chip.classList.add("pulse");
+    }
+
     const beforeLevel = state.level;
     state.xp += q.xp;
 
@@ -295,7 +321,7 @@ $reroll.addEventListener("click", ()=>{
   playClick();
   state.quests = generateDailyQuestsCategorized();
   state.rerolledForDay = true;
-  toast("Neue Fragen generiert.", "success");
+  toast("Neue Aufgaben generiert.", "success");
   saveState(); renderAll();
 });
 
@@ -307,7 +333,7 @@ function checkReset(){
     state.resetAt = nextResetMidnight().toISOString();
     state.quests = generateDailyQuestsCategorized();
     state.rerolledForDay = false;
-    toast("Neuer Tag, neue Fragen!", "success");
+    toast("Neuer Tag, neue Aufgaben!", "success");
     saveState(); renderAll();
   }else{
     renderStatus();
