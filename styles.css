@@ -121,18 +121,15 @@ body::before{
 
 /* Level-Up Animation */
 @keyframes levelUpPulse{
-  0%{ transform: scale(1); box-shadow: 0 0 0 0 rgba(55,242,231,.0) }
-  30%{ transform: scale(1.05) }
-  60%{ transform: scale(1); }
+  0%{ transform: scale(1); }
+  35%{ transform: scale(1.07); }
   100%{ transform: scale(1); }
 }
 @keyframes levelUpRings{
   0%{ opacity:.6; transform: scale(1) }
   100%{ opacity:0; transform: scale(2.2) }
 }
-.level-card.level-up{
-  animation: levelUpPulse .8s ease;
-}
+.level-card.level-up{ animation: levelUpPulse .8s ease; }
 .level-card.level-up::after{
   content:""; position:absolute; inset:-2px; border-radius: inherit; pointer-events:none;
   border:2px solid rgba(55,242,231,.65);
@@ -194,9 +191,7 @@ body::before{
   text-shadow: 0 1px 0 rgba(255,255,255,.35);
   box-shadow: 0 10px 28px rgba(179,138,255,.35), 0 0 32px rgba(55,242,231,.25);
 }
-.btn:disabled{
-  opacity:.55; cursor:not-allowed; filter: grayscale(.3);
-}
+.btn:disabled{ opacity:.55; cursor:not-allowed; filter: grayscale(.3); }
 
 /* Filter buttons */
 .filter{ display:flex; gap:8px; flex-wrap:wrap }
@@ -260,6 +255,14 @@ body::before{
   box-shadow: 0 0 18px rgba(55,242,231,.35);
   transition: width .35s ease;
 }
+
+/* Pulse-Animation für Gesamt-Chip (optional genutzt) */
+@keyframes pulseChip {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.chip.pulse { animation: pulseChip .5s ease; }
 
 /* Text utils */
 .muted{ color: var(--muted) }
