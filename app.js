@@ -1,14 +1,11 @@
 // ===== Sidequests – Cyberpunk Edition =====
-// v5: neue Kategorien (Ernährung, Haushalt, Digital Detox, Finanzen, Sprache),
-// klarere Aufgaben, Fix für "Gesamt erledigt" Anzeige
-// - tägliche Auswahl: 3 easy, 3 medium, 2 hard (Fallback bei Bedarf)
-// - permanenter Zähler "Gesamt erledigt" (Increment beim Einlösen +XP)
-// - XP 0–100 pro Level, Level-Up-Animation
-// - Reroll 1×/Tag, täglicher Reset um Mitternacht
+// v6: 12 tägliche Aufgaben + neue Stufe "super" (Pool-basiert)
+// Verteilung: 4 easy, 4 med, 3 hard, 1 super
+// Fixe: Gesamtzähler + UI, Reroll 1×/Tag, Mitternachts-Reset
 
-const STORAGE_KEY = "sidequests_cyber_pool_v5";
+const STORAGE_KEY = "sidequests_cyber_pool_v6";
 
-/* Aufgaben-Katalog – erweitert und präzisiert, inkl. neuer Kategorien */
+/* Aufgaben-Katalog (easy/med/hard unverändert + erweitert) */
 const QUESTS = [
   // Bewegung – LEICHT
   { title:"Kniebeugen: 3×10", detail:"3 Sätze à 10, 30s Pause", cat:"Bewegung", diff:"easy", time:"5 Min", xp:10 },
@@ -82,46 +79,55 @@ const QUESTS = [
   // Spaß – MITTEL
   { title:"Mini‑Rätsel lösen", detail:"Sudoku/Nonogramm ≤10 Min", cat:"Spaß", diff:"med", time:"5–10 Min", xp:15 },
 
-  // Ernährung – LEICHT (NEU)
+  // Ernährung – LEICHT
   { title:"1 Glas Wasser trinken", detail:"bewusst, ohne Ablenkung", cat:"Ernährung", diff:"easy", time:"1 Min", xp:8 },
   { title:"1 Obstportion", detail:"z.B. Apfel/Banane", cat:"Ernährung", diff:"easy", time:"2 Min", xp:10 },
   { title:"Snack‑Check", detail:"1 zuckerigen Snack ersetzen", cat:"Ernährung", diff:"easy", time:"2–3 Min", xp:10 },
 
-  // Ernährung – MITTEL (NEU)
+  // Ernährung – MITTEL
   { title:"Protein‑Check", detail:"1 proteinreiche Portion (z.B. Joghurt)", cat:"Ernährung", diff:"med", time:"5 Min", xp:15 },
   { title:"Mahlzeit planen", detail:"1 gesunde Mahlzeit für morgen", cat:"Ernährung", diff:"med", time:"5–7 Min", xp:15 },
 
-  // Haushalt – LEICHT (NEU)
+  // Haushalt – LEICHT
   { title:"Spülzyklus kurz", detail:"5 Teller/Gläser spülen", cat:"Haushalt", diff:"easy", time:"5 Min", xp:10 },
   { title:"Boden: 2 m² kehren", detail:"kleine Fläche", cat:"Haushalt", diff:"easy", time:"4 Min", xp:10 },
 
-  // Haushalt – MITTEL (NEU)
+  // Haushalt – MITTEL
   { title:"Wäsche: 1 Korb falten", detail:"nur falten + wegräumen", cat:"Haushalt", diff:"med", time:"10–12 Min", xp:18 },
   { title:"Bad: Waschbecken reinigen", detail:"inkl. Spiegel wischen", cat:"Haushalt", diff:"med", time:"8–10 Min", xp:18 },
 
-  // Digital Detox – LEICHT (NEU)
+  // Digital Detox – LEICHT
   { title:"Benachrichtigungen prüfen", detail:"1 App stummschalten", cat:"Digital Detox", diff:"easy", time:"3 Min", xp:10 },
   { title:"Homescreen aufräumen", detail:"2 Apps in Ordner verschieben", cat:"Digital Detox", diff:"easy", time:"3–4 Min", xp:10 },
 
-  // Digital Detox – MITTEL (NEU)
+  // Digital Detox – MITTEL
   { title:"Social Break: 10 Min", detail:"keine sozialen Medien", cat:"Digital Detox", diff:"med", time:"10 Min", xp:15 },
   { title:"Abos checken", detail:"1 unnötiges Abo kündigen", cat:"Digital Detox", diff:"med", time:"8–12 Min", xp:18 },
 
-  // Finanzen – LEICHT (NEU)
+  // Finanzen – LEICHT
   { title:"1 Ausgabe notieren", detail:"Betrag + Kategorie", cat:"Finanzen", diff:"easy", time:"2 Min", xp:10 },
   { title:"Konto‑Check", detail:"Saldo prüfen, 1 Auffälligkeit notieren", cat:"Finanzen", diff:"easy", time:"3 Min", xp:10 },
 
-  // Finanzen – MITTEL (NEU)
+  // Finanzen – MITTEL
   { title:"Budget 5 Min updaten", detail:"eine Kategorie anpassen", cat:"Finanzen", diff:"med", time:"5 Min", xp:15 },
   { title:"Sparziel definieren", detail:"1 Ziel + Monatsbetrag festlegen", cat:"Finanzen", diff:"med", time:"5–7 Min", xp:15 },
 
-  // Sprache – LEICHT (NEU)
+  // Sprache – LEICHT
   { title:"Vokabeln: 5 Wörter", detail:"mit 1 Beispielsatz", cat:"Sprache", diff:"easy", time:"5 Min", xp:10 },
   { title:"Aussprache: 2 Sätze laut", detail:"z.B. Podcast nachsprechen", cat:"Sprache", diff:"easy", time:"3–4 Min", xp:10 },
 
-  // Sprache – MITTEL (NEU)
+  // Sprache – MITTEL
   { title:"Mini‑Dialog schreiben", detail:"6 Zeilen, Alltagsthema", cat:"Sprache", diff:"med", time:"6–8 Min", xp:15 },
   { title:"Kurztext lesen", detail:"1 Absatz + 3 Fragen beantworten", cat:"Sprache", diff:"med", time:"8–10 Min", xp:18 },
+];
+
+/* Super-schwerer Pool (NEU) – 3–5 Aufgaben, 1 wird täglich gepickt */
+const SUPER_POOL = [
+  { title:"10 km zügig gehen/laufen", detail:"gutes Tempo, gleichmäßig; Aufwärmen + Cooldown", cat:"Bewegung", diff:"super", time:"60–80 Min", xp:90 },
+  { title:"Treppen-Marathon: 60 Stockwerke", detail:"Pausen erlaubt, gleichmäßig zählen", cat:"Bewegung", diff:"super", time:"35–50 Min", xp:95 },
+  { title:"EMOM 30 Min", detail:"Minute: 12 Pushups • Minute: 20 Air Squats (abwechselnd)", cat:"Bewegung", diff:"super", time:"30 Min", xp:92 },
+  { title:"Digital Detox Hardcore", detail:"4 Stunden komplett offline (Flugmodus), vorab planen", cat:"Digital Detox", diff:"super", time:"240 Min", xp:90 },
+  { title:"Deep Work Sprint", detail:"2×50 Min fokussiert mit 10 Min Pause (ohne Störungen)", cat:"Lernen", diff:"super", time:"110 Min", xp:88 }
 ];
 
 /* Utils */
@@ -137,6 +143,7 @@ function pickRandomFrom(arr, n){
   }
   return out;
 }
+function pickOne(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function pad2(n){ return n<10 ? "0"+n : ""+n; }
 function timeToHHMM(ms){
   if(ms<=0) return {h:"00", m:"00"};
@@ -148,48 +155,57 @@ function timeToHHMM(ms){
 let state = loadState();
 function defaultState(){
   return {
-    xp: 0,                // XP innerhalb des aktuellen Levels (0–100)
-    level: 1,             // aktuelles Level
+    xp: 0,
+    level: 1,
     lastDay: todayKey(),
     resetAt: nextResetMidnight().toISOString(),
-    rerolledForDay: false, // 1×/Tag-Limit
+    rerolledForDay: false,
     quests: generateDailyQuestsCategorized(),
-    totalDone: 0,         // Gesamt erledigte Aufgaben (persistent)
+    totalDone: 0,
   };
 }
 
-/* Generiert 3 easy, 3 med, 2 hard – robust */
+/* Neue Tageslogik: 4 easy, 4 med, 3 hard, 1 super (Fallbacks) */
 function generateDailyQuestsCategorized(){
   const easy = QUESTS.filter(q=>q.diff==="easy");
   const med  = QUESTS.filter(q=>q.diff==="med");
   const hard = QUESTS.filter(q=>q.diff==="hard");
 
-  const needEasy = 3, needMed = 3, needHard = 2;
+  const needEasy = 4, needMed = 4, needHard = 3;
 
   let chosen = [
     ...pickRandomFrom(easy, Math.min(needEasy, easy.length)),
-    ...pickRandomFrom(med, Math.min(needMed, med.length)),
+    ...pickRandomFrom(med,  Math.min(needMed,  med.length)),
   ];
 
   const hardTake = Math.min(needHard, hard.length);
   chosen = [...chosen, ...pickRandomFrom(hard, hardTake)];
 
-  // Fallback: falls hard < 2, mit med auffüllen
+  // Fallback: harte Slots mit mittel auffüllen
   if (hardTake < needHard) {
     const missing = needHard - hardTake;
     const medPool = med.filter(m => !chosen.includes(m));
     chosen = [...chosen, ...pickRandomFrom(medPool, Math.min(missing, medPool.length))];
   }
 
+  // Super-Aufgabe (1 aus Pool)
+  const superQuestRaw = pickOne(SUPER_POOL);
+  const superQuest = { ...superQuestRaw };
+
+  // IDs vergeben und Flags setzen
   chosen = chosen.map((q,i)=>({
     id: `${todayKey()}_${i}_${Math.random().toString(36).slice(2,6)}`,
     ...q, done:false, claimed:false
   }));
 
-  // Sortierung: easy -> med -> hard
-  const w = d => d==="easy"?1: d==="med"?2: 3;
-  chosen.sort((a,b)=> w(a.diff)-w(b.diff));
-  return chosen;
+  const superId = `${todayKey()}_super_${Math.random().toString(36).slice(2,6)}`;
+  const superWrapped = { id: superId, ...superQuest, done:false, claimed:false };
+
+  // Sortierung: easy -> med -> hard -> super
+  const weight = d => d==="easy"?1 : d==="med"?2 : d==="hard"?3 : d==="super"?4 : 5;
+
+  const full = [...chosen, superWrapped].sort((a,b)=> weight(a.diff)-weight(b.diff));
+  return full;
 }
 
 function loadState(){
@@ -206,7 +222,6 @@ function loadState(){
       s.rerolledForDay = false;
     }
 
-    // Safety/Defaults
     s.xp = Math.max(0, Math.min(100, s.xp|0));
     s.level = Math.max(1, s.level|0);
     if(!Array.isArray(s.quests) || s.quests.length===0){
@@ -265,9 +280,10 @@ function renderStatus(){
   if($totalDone) $totalDone.textContent = `${state.totalDone} gesamt`;
 }
 function diffBadge(diff){
-  if(diff==="easy") return `<span class="badge b-diff-easy"><span class="dot" style="background:#7bffc8"></span>Leicht</span>`;
-  if(diff==="med")  return `<span class="badge b-diff-med"><span class="dot" style="background:#ffd86b"></span>Mittel</span>`;
-  return `<span class="badge b-diff-hard"><span class="dot" style="background:#ff8cb8"></span>Schwer</span>`;
+  if(diff==="easy")  return `<span class="badge b-diff-easy"><span class="dot" style="background:#7bffc8"></span>Leicht</span>`;
+  if(diff==="med")   return `<span class="badge b-diff-med"><span class="dot" style="background:#ffd86b"></span>Mittel</span>`;
+  if(diff==="hard")  return `<span class="badge b-diff-hard"><span class="dot" style="background:#ff8cb8"></span>Schwer</span>`;
+  return `<span class="badge b-diff-super"><span class="dot" style="background:#ff6ad5"></span>Super</span>`;
 }
 function taskRow(q){
   const dif = diffBadge(q.diff);
@@ -319,10 +335,8 @@ if($questList){
       if(!q.done || q.claimed) return;
       q.claimed = true;
 
-      // Gesamtzähler hochzählen
       state.totalDone = (state.totalDone || 0) + 1;
 
-      // Pulse-Animation auf dem Chip
       if($totalDoneChip){
         $totalDoneChip.classList.remove("pulse");
         void $totalDoneChip.offsetWidth;
@@ -332,7 +346,6 @@ if($questList){
       const beforeLevel = state.level;
       state.xp += q.xp;
 
-      // Level-Up Logik mit XP-Reset pro Level (100 XP pro Stufe)
       while(state.xp >= 100){
         state.xp -= 100;
         state.level += 1;
@@ -395,15 +408,16 @@ setInterval(checkReset, 15_000);
 
 /* Level-Up Animation */
 function triggerLevelUpAnimation(){
+  const $levelCard = document.getElementById("levelCard");
   if(!$levelCard) return;
   $levelCard.classList.remove("level-up");
-  void $levelCard.offsetWidth; // reflow
+  void $levelCard.offsetWidth;
   $levelCard.classList.add("level-up");
 }
 
 /* Cyber Effekte: Sound, Cursor-Glow, Hover-Partikel */
 function playClick(){
-  const a = $audioClick;
+  const a = document.getElementById("uiClick");
   if(!a) return;
   a.currentTime = 0;
   a.volume = 0.25;
