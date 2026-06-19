@@ -66,7 +66,7 @@ body::before{
 #hoverParticles{ position: fixed; inset:0; pointer-events:none; z-index: 2 }
 
 /* Layout */
-.shell{ max-width: 680px; margin: 0 auto; padding: 18px 16px 28px; position: relative; z-index:1 }
+.shell{ max-width: 720px; margin: 0 auto; padding: 18px 16px 28px; position: relative; z-index:1 }
 
 /* Appbar */
 .appbar{
@@ -77,7 +77,7 @@ body::before{
   box-shadow: 0 10px 40px rgba(179,138,255,.15);
 }
 .appbar-inner{
-  max-width: 760px; margin:0 auto; padding: 12px 16px;
+  max-width: 820px; margin:0 auto; padding: 12px 16px;
   display:flex; align-items:center; justify-content:space-between; gap:14px;
 }
 .brand{ display:flex; align-items:center; gap:12px }
