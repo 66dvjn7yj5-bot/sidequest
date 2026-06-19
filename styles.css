@@ -66,7 +66,7 @@ body::before{
 #hoverParticles{ position: fixed; inset:0; pointer-events:none; z-index: 2 }
 
 /* Layout */
-.shell{ max-width: 600px; margin: 0 auto; padding: 18px 16px 28px; position: relative; z-index:1 }
+.shell{ max-width: 680px; margin: 0 auto; padding: 18px 16px 28px; position: relative; z-index:1 }
 
 /* Appbar */
 .appbar{
@@ -77,7 +77,7 @@ body::before{
   box-shadow: 0 10px 40px rgba(179,138,255,.15);
 }
 .appbar-inner{
-  max-width: 640px; margin:0 auto; padding: 12px 16px;
+  max-width: 760px; margin:0 auto; padding: 12px 16px;
   display:flex; align-items:center; justify-content:space-between; gap:14px;
 }
 .brand{ display:flex; align-items:center; gap:12px }
@@ -96,7 +96,7 @@ body::before{
 /* Status */
 .status{ display:flex; gap:10px; align-items:center; flex-wrap:wrap }
 
-/* Deutliches Level-Feld */
+/* Level-Card */
 .level-card{
   display:grid; grid-template-columns:auto 1fr; align-items:center; gap:10px;
   padding:10px 14px; border-radius: 14px;
@@ -193,7 +193,7 @@ body::before{
 }
 .btn:disabled{ opacity:.55; cursor:not-allowed; filter: grayscale(.3); }
 
-/* Filter buttons */
+/* Filter */
 .filter{ display:flex; gap:8px; flex-wrap:wrap }
 .filter-btn{
   background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
@@ -220,7 +220,7 @@ body::before{
   box-shadow: 0 0 24px rgba(55,242,231,.08) inset;
 }
 .task:hover{ transform: translateY(-1px); box-shadow: 0 16px 40px rgba(0,0,0,.30) }
-.task.done{ opacity:.8; filter:saturate(.85) }
+.task.done{ opacity:.85; filter:saturate(.9) }
 .task-title{ font-weight:900; letter-spacing:.2px }
 .task-sub{ display:flex; flex-wrap:wrap; gap:8px; margin-top:7px }
 
@@ -256,7 +256,7 @@ body::before{
   transition: width .35s ease;
 }
 
-/* Pulse-Animation für Gesamt-Chip (optional genutzt) */
+/* Pulse für Gesamt-Chip */
 @keyframes pulseChip {
   0% { transform: scale(1); }
   35% { transform: scale(1.06); }
