@@ -20,16 +20,15 @@
       </div>
 
       <div class="status">
-        <!-- Level -->
         <div class="level-card" id="levelCard" aria-live="polite">
           <div class="level-label">Level</div>
           <div class="level-value" id="levelValue">1</div>
         </div>
-        <!-- XP -->
+
         <div class="chip neon" title="XP im aktuellen Level">
           <span>✨</span><span id="xp">0 XP</span>
         </div>
-        <!-- Gesamt erledigt -->
+
         <div class="chip" id="totalDoneChip" title="Insgesamt erledigte Aufgaben">
           <span>✓</span><span id="totalDone">0 gesamt</span>
         </div>
@@ -38,7 +37,6 @@
   </header>
 
   <main class="shell">
-    <!-- Level-Fortschritt -->
     <section class="panel">
       <div class="panel-head">
         <h3>Level‑Fortschritt</h3>
@@ -49,7 +47,6 @@
       </div>
     </section>
 
-    <!-- Reset + Reroll -->
     <section class="panel timer-panel">
       <div class="timer-left">
         <div class="timer-title">Nächster Reset</div>
@@ -63,7 +60,6 @@
       </div>
     </section>
 
-    <!-- Aufgaben -->
     <section class="panel">
       <div class="panel-head">
         <h3>Heutige Aufgaben</h3>
@@ -76,12 +72,11 @@
       <div id="tasksCount" class="muted small"></div>
       <div id="questList" class="list" aria-live="polite"></div>
       <div class="panel-foot small muted">
-        Tägliche Auswahl: 3 leicht, 3 mittel und 2 schwer. XP werden beim Level‑Up auf 0 zurückgesetzt.
+        Tägliche Auswahl: 4 leicht, 4 mittel, 3 schwer und 1 super schwer. XP werden beim Level‑Up auf 0 zurückgesetzt.
       </div>
     </section>
   </main>
 
-  <!-- Cyber overlays -->
   <div class="scanlines" aria-hidden="true"></div>
   <canvas id="hoverParticles" aria-hidden="true"></canvas>
   <audio id="uiClick" preload="auto">
