@@ -2,60 +2,52 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
-  <title>Sidequests – Cyber</title>
+  <title>Sidequests – Daily</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="theme-color" content="#0a0914" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#10121a" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="appbar">
     <div class="appbar-inner">
       <div class="brand">
-        <div class="mark">◇</div>
-        <div>
-          <h1>Sidequests</h1>
-          <div class="brand-sub">Neon Daily Protocol</div>
+        <div class="logo">◇</div>
+        <div class="brand-text">
+          <div class="title">Sidequests</div>
+          <div class="subtitle">Tägliche Mini‑Challenges</div>
         </div>
       </div>
-
       <div class="status">
-        <div class="level-card" id="levelCard" aria-live="polite">
-          <div class="level-label">Level</div>
-          <div class="level-value" id="levelValue">1</div>
+        <div class="level">
+          <span class="level-label">Level</span>
+          <span class="level-value" id="levelValue">1</span>
         </div>
-
-        <div class="chip neon" title="XP im aktuellen Level">
-          <span>✨</span><span id="xp">0 XP</span>
-        </div>
-
-        <div class="chip" id="totalDoneChip" title="Insgesamt erledigte Aufgaben">
-          <span>✓</span><span id="totalDone">0 gesamt</span>
-        </div>
+        <div class="chip" id="xpChip">✨ <span id="xpText">0/100 XP</span></div>
+        <div class="chip" id="doneChip">✓ <span id="doneText">0 gesamt</span></div>
       </div>
     </div>
   </header>
 
-  <main class="shell">
+  <main class="container">
     <section class="panel">
       <div class="panel-head">
-        <h3>Level‑Fortschritt</h3>
+        <h3>Fortschritt</h3>
         <div class="muted small" id="nextLevelInfo">0/100 XP bis Level 2</div>
       </div>
-      <div class="xpbar">
-        <div class="xpbar-fill" id="xpFill" style="width:0%"></div>
+      <div class="bar">
+        <div class="bar-fill" id="xpBar" style="width:0%"></div>
       </div>
     </section>
 
-    <section class="panel timer-panel">
-      <div class="timer-left">
-        <div class="timer-title">Nächster Reset</div>
+    <section class="panel panel-row">
+      <div class="timer">
+        <div class="timer-label">Nächster Reset</div>
         <div class="timer-value"><span id="resetH">00</span>:<span id="resetM">00</span></div>
       </div>
-      <div class="timer-right">
-        <button id="reroll" class="btn btn-reroll" title="Neue Aufgaben (1×/Tag)">
-          <span class="btn-ico" aria-hidden="true">⟳</span>
-          Neue Aufgaben
+      <div class="actions">
+        <button class="btn btn-primary" id="rerollBtn" title="Neue Aufgaben (1×/Tag)">
+          ⟳ Neue Aufgaben
         </button>
       </div>
     </section>
@@ -63,25 +55,22 @@
     <section class="panel">
       <div class="panel-head">
         <h3>Heutige Aufgaben</h3>
-        <div class="filter">
-          <button class="filter-btn active" data-filter="all">Alle</button>
-          <button class="filter-btn" data-filter="todo">Unerledigt</button>
-          <button class="filter-btn" data-filter="done">Erledigt</button>
+        <div class="filters">
+          <button class="filter active" data-filter="all">Alle</button>
+          <button class="filter" data-filter="todo">Unerledigt</button>
+          <button class="filter" data-filter="done">Erledigt</button>
         </div>
       </div>
-      <div id="tasksCount" class="muted small"></div>
-      <div id="questList" class="list" aria-live="polite"></div>
-      <div class="panel-foot small muted">
-        Tägliche Auswahl: 4 leicht, 4 mittel, 3 schwer und 1 super schwer. XP werden beim Level‑Up auf 0 zurückgesetzt.
+      <div class="muted small" id="tasksCounter">0/12 abgeschlossen</div>
+      <div id="list" class="task-list" aria-live="polite"></div>
+      <div class="panel-foot muted small">
+        Verteilung: 4 leicht, 4 mittel, 3 schwer, 1 super (aus Pool). Reroll 1×/Tag. Progressives XP‑Level‑System.
       </div>
     </section>
   </main>
 
-  <div class="scanlines" aria-hidden="true"></div>
-  <canvas id="hoverParticles" aria-hidden="true"></canvas>
-  <audio id="uiClick" preload="auto">
-    <source src="data:audio/wav;base64,UklGRoQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAAgAABkYXRhYQAAAAAA/////wAAAP///+Hh4eDg4N/f39vb29nZ2dPT08/Pz8vLy8bGxsbGxoaGhgYGBQUFBMTEw8PDwAAAA" type="audio/wav">
-  </audio>
+  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
   <script src="app.js"></script>
 </body>
 </html>
