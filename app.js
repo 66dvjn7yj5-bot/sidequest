@@ -1,85 +1,86 @@
 // ===== Sidequests – Cyberpunk Edition =====
-// - größerer Aufgabenpool (inkl. vieler „hard“-Aufgaben)
+// Fix: "Gesamt erledigt" zählt zuverlässig + klarere Aufgaben
+// - größerer Pool (präzise Anweisungen, besonders "Schwer")
 // - tägliche Auswahl: 3 easy, 3 medium, 2 hard (Fallback falls nötig)
-// - permanenter Zähler "Gesamt erledigt"
+// - permanenter Zähler "Gesamt erledigt" (increment beim Einlösen +XP)
 // - XP 0–100 pro Level, Level-Up-Animation
 // - Reroll 1×/Tag, täglicher Reset um Mitternacht
 
-const STORAGE_KEY = "sidequests_cyber_pool_v3";
+const STORAGE_KEY = "sidequests_cyber_pool_v4";
 
-/* Aufgaben-Katalog – erweitert */
+/* Aufgaben-Katalog – erweitert und präzisiert */
 const QUESTS = [
-  // Bewegung – easy
-  { title:"20 Kniebeugen", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
-  { title:"15 Ausfallschritte (gesamt)", cat:"Bewegung", diff:"easy", time:"3 Min", xp:10 },
-  { title:"30 Sekunden Wandsitz", cat:"Bewegung", diff:"easy", time:"1 Min", xp:10 },
-  { title:"20 Jumping Jacks", cat:"Bewegung", diff:"easy", time:"2 Min", xp:10 },
-  { title:"10 Sekunden Schulterkreisen", cat:"Bewegung", diff:"easy", time:"1 Min", xp:8 },
+  // Bewegung – LEICHT
+  { title:"Kniebeugen: 3×10", detail:"3 Sätze à 10 Wiederholungen, 30s Pause", cat:"Bewegung", diff:"easy", time:"5 Min", xp:10 },
+  { title:"Wandsitz: 2×30s", detail:"Zwei Durchgänge, 30s Pause", cat:"Bewegung", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Jumping Jacks: 2×20", detail:"Zwei Durchgänge à 20, 20s Pause", cat:"Bewegung", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Gehen: 600 Schritte", detail:"Schrittzähler nutzen; ca. 5 Minuten", cat:"Bewegung", diff:"easy", time:"5 Min", xp:10 },
+  { title:"Mobilisieren: Schultern 2×20 Kreise", detail:"Vorwärts & rückwärts je 20", cat:"Bewegung", diff:"easy", time:"3 Min", xp:8 },
 
-  // Bewegung – medium
-  { title:"30‑Sekunden Plank", cat:"Bewegung", diff:"med", time:"1 Min", xp:15 },
-  { title:"3×10 Sekunden Dehnen (Beine)", cat:"Bewegung", diff:"med", time:"3 Min", xp:15 },
-  { title:"15 Liegestütze (gern auf Knien)", cat:"Bewegung", diff:"med", time:"4 Min", xp:18 },
-  { title:"10 Burpees light", cat:"Bewegung", diff:"med", time:"4 Min", xp:18 },
-  { title:"Kniehebelauf 60 Sekunden", cat:"Bewegung", diff:"med", time:"1 Min", xp:15 },
+  // Bewegung – MITTEL
+  { title:"Plank: 3×30s", detail:"Ellenbogenstütz, 30s Pause", cat:"Bewegung", diff:"med", time:"5 Min", xp:15 },
+  { title:"Ausfallschritte: 3×12 (gesamt)", detail:"Je Bein 6 Wdh., 45s Pause", cat:"Bewegung", diff:"med", time:"6 Min", xp:18 },
+  { title:"Liegestütze: 3×10", detail:"Auf Knien oder voll, 45s Pause", cat:"Bewegung", diff:"med", time:"6–7 Min", xp:18 },
+  { title:"Burpees light: 2×12", detail:"Ohne Liegestütz, 45s Pause", cat:"Bewegung", diff:"med", time:"5 Min", xp:18 },
+  { title:"Kniehebelauf: 3×45s", detail:"45s on / 30s off", cat:"Bewegung", diff:"med", time:"6–7 Min", xp:15 },
 
-  // Bewegung – hard
-  { title:"1 km Spaziergang/Joggen", cat:"Bewegung", diff:"hard", time:"12–15 Min", xp:30 },
-  { title:"Intervall: 5×(30s schnell/30s langsam)", cat:"Bewegung", diff:"hard", time:"10 Min", xp:30 },
-  { title:"Treppen-Challenge: 10 Stockwerke gesamt", cat:"Bewegung", diff:"hard", time:"10–12 Min", xp:32 },
-  { title:"Tabata 4 Min (20/10s, 8 Runden)", cat:"Bewegung", diff:"hard", time:"4 Min", xp:28 },
-  { title:"2 km zügig gehen", cat:"Bewegung", diff:"hard", time:"20–24 Min", xp:34 },
-  { title:"4 Sätze: 15 Squats/10 Pushups", cat:"Bewegung", diff:"hard", time:"10–12 Min", xp:32 },
+  // Bewegung – SCHWER
+  { title:"Zügig gehen/joggen: 1 km", detail:"Tempo so, dass du sprechen kannst", cat:"Bewegung", diff:"hard", time:"10–15 Min", xp:30 },
+  { title:"Intervalle: 6×(30s schnell/30s locker)", detail:"Start mit Aufwärmen 2 Min", cat:"Bewegung", diff:"hard", time:"12–14 Min", xp:32 },
+  { title:"Treppen: 10 Stockwerke gesamt", detail:"Auf- und abwärts zählen", cat:"Bewegung", diff:"hard", time:"10–12 Min", xp:32 },
+  { title:"Tabata Ganzkörper: 8 Runden 20/10", detail:"Air Squats & Mountain Climbers", cat:"Bewegung", diff:"hard", time:"4–6 Min", xp:30 },
+  { title:"Gehen: 2 km zügig", detail:"Durchziehen ohne lange Pause", cat:"Bewegung", diff:"hard", time:"20–24 Min", xp:34 },
+  { title:"Kraftzirkel: 4 Runden", detail:"15 Squats + 10 Pushups + 20 JJ", cat:"Bewegung", diff:"hard", time:"12–15 Min", xp:34 },
 
-  // Achtsamkeit – easy
-  { title:"1 Minute bewusst atmen", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
-  { title:"3 Dinge notieren, die gut waren", cat:"Achtsamkeit", diff:"easy", time:"3 Min", xp:10 },
-  { title:"30s Body-Scan (Kopf bis Fuß)", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
+  // Achtsamkeit – LEICHT
+  { title:"Atemfokus: 1 Minute", detail:"4s ein – 4s aus", cat:"Achtsamkeit", diff:"easy", time:"1 Min", xp:10 },
+  { title:"Dankbarkeit: 3 Notizen", detail:"3 konkrete, heutige Dinge", cat:"Achtsamkeit", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Body-Scan: 45s", detail:"Von Kopf bis Fuß, langsam", cat:"Achtsamkeit", diff:"easy", time:"1–2 Min", xp:10 },
 
-  // Achtsamkeit – medium
-  { title:"5 Minuten offline sein", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
-  { title:"2 Minuten langsame Box-Breathing", cat:"Achtsamkeit", diff:"med", time:"2 Min", xp:15 },
-  { title:"1 kurze Meditation (App/YouTube)", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
+  // Achtsamkeit – MITTEL
+  { title:"Digital Detox: 5 Minuten", detail:"Handy weg, Blick aus dem Fenster", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
+  { title:"Box-Breathing: 2×(4‑4‑4‑4)", detail:"Ein‑halten‑aus‑halten", cat:"Achtsamkeit", diff:"med", time:"3–4 Min", xp:15 },
+  { title:"Mini‑Meditation: 1 Session", detail:"App/Video ≤5 Min", cat:"Achtsamkeit", diff:"med", time:"5 Min", xp:15 },
 
-  // Kreativität – easy
-  { title:"Skizziere ein kleines Doodle", cat:"Kreativität", diff:"easy", time:"2 Min", xp:10 },
-  { title:"Schreibe einen 2‑Zeilen‑Reim", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
-  { title:"Fotografiere etwas in Blau", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
+  // Kreativität – LEICHT
+  { title:"Doodle: 3 kleine Skizzen", detail:"3 Objekte in 3 Minuten", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
+  { title:"Zwei‑Zeiler dichten", detail:"Reim mit einem Alltagsding", cat:"Kreativität", diff:"easy", time:"2–3 Min", xp:10 },
+  { title:"Foto-Challenge: Farbe Blau", detail:"1 Motiv in Blau", cat:"Kreativität", diff:"easy", time:"3 Min", xp:10 },
 
-  // Kreativität – medium
-  { title:"Schreibe 50 Wörter Freewriting", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
-  { title:"Skizziere 3 Logo‑Ideen in 5 Min", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
+  // Kreativität – MITTEL
+  { title:"Freewriting: 70 Wörter", detail:"Ohne Stoppen, Thema frei", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
+  { title:"Logo‑Skizzen: 3 Varianten", detail:"5 Minuten Timer", cat:"Kreativität", diff:"med", time:"5 Min", xp:15 },
 
-  // Soziales – easy
-  { title:"Schicke eine nette Nachricht", cat:"Soziales", diff:"easy", time:"3 Min", xp:10 },
-  { title:"Bedanke dich bei jemandem", cat:"Soziales", diff:"easy", time:"2 Min", xp:10 },
+  // Soziales – LEICHT
+  { title:"Nette Nachricht senden", detail:"Kurzer Check‑in an jemanden", cat:"Soziales", diff:"easy", time:"2–3 Min", xp:10 },
+  { title:"Dank aussprechen", detail:"Eine konkrete Person, ein Anlass", cat:"Soziales", diff:"easy", time:"2 Min", xp:10 },
 
-  // Soziales – medium
-  { title:"Kurzes Telefonat mit Freund:in", cat:"Soziales", diff:"med", time:"5 Min", xp:18 },
-  { title:"Plane ein kurzes Treffen", cat:"Soziales", diff:"med", time:"5 Min", xp:15 },
+  // Soziales – MITTEL
+  { title:"Kurz telefonieren", detail:"2–5 Minuten Smalltalk", cat:"Soziales", diff:"med", time:"5 Min", xp:18 },
+  { title:"Mini‑Treffen planen", detail:"Termin vorschlagen + 1 Option", cat:"Soziales", diff:"med", time:"5 Min", xp:15 },
 
-  // Ordnung – easy
-  { title:"Mülleimer leeren", cat:"Ordnung", diff:"easy", time:"2 Min", xp:8 },
-  { title:"Schreibtischfläche wischen", cat:"Ordnung", diff:"easy", time:"2 Min", xp:10 },
+  // Ordnung – LEICHT
+  { title:"Mülleimer leeren", detail:"Küche oder Zimmer", cat:"Ordnung", diff:"easy", time:"2 Min", xp:8 },
+  { title:"Schreibtisch wischen", detail:"Fläche freiräumen, wischen", cat:"Ordnung", diff:"easy", time:"3 Min", xp:10 },
 
-  // Ordnung – medium
-  { title:"Räume eine kleine Fläche auf", cat:"Ordnung", diff:"med", time:"5 Min", xp:20 },
-  { title:"E‑Mail Posteingang: 10 Mails aufräumen", cat:"Ordnung", diff:"med", time:"5 Min", xp:15 },
+  // Ordnung – MITTEL
+  { title:"Hotspot aufräumen: 1 Zone", detail:"z.B. Schublade/Regalbrett", cat:"Ordnung", diff:"med", time:"5–7 Min", xp:20 },
+  { title:"E‑Mail: 10 Mails verarbeiten", detail:"Löschen/Archivieren/Antworten", cat:"Ordnung", diff:"med", time:"5–7 Min", xp:15 },
 
-  // Lernen – easy
-  { title:"Lerne 1 neues Wort", cat:"Lernen", diff:"easy", time:"2 Min", xp:10 },
-  { title:"Lies 1 Absatz eines Artikels", cat:"Lernen", diff:"easy", time:"3 Min", xp:10 },
+  // Lernen – LEICHT
+  { title:"1 neues Wort lernen", detail:"Definition & Beispiel", cat:"Lernen", diff:"easy", time:"2–3 Min", xp:10 },
+  { title:"1 Absatz lesen", detail:"Kernaussage notieren", cat:"Lernen", diff:"easy", time:"3 Min", xp:10 },
 
-  // Lernen – medium
-  { title:"2 Karteikarten wiederholen", cat:"Lernen", diff:"med", time:"4 Min", xp:15 },
-  { title:"Kurzes Erklärvideo (≤5 Min) schauen", cat:"Lernen", diff:"med", time:"5 Min", xp:15 },
+  // Lernen – MITTEL
+  { title:"Karteikarten: 5 Stück wiederholen", detail:"Aktives Recall", cat:"Lernen", diff:"med", time:"4–6 Min", xp:15 },
+  { title:"Erklärvideo ≤5 Min", detail:"1 Erkenntnis notieren", cat:"Lernen", diff:"med", time:"5 Min", xp:15 },
 
-  // Spaß – easy
-  { title:"10 Sek. Freestyle‑Tanz", cat:"Spaß", diff:"easy", time:"1 Min", xp:10 },
-  { title:"Erfinde einen absurden Superhelden‑Namen", cat:"Spaß", diff:"easy", time:"2 Min", xp:10 },
+  // Spaß – LEICHT
+  { title:"Freestyle‑Tanz: 20s", detail:"Musik an, bewegen", cat:"Spaß", diff:"easy", time:"1 Min", xp:10 },
+  { title:"Absurder Superhelden‑Name", detail:"Figur + Fähigkeit erfinden", cat:"Spaß", diff:"easy", time:"2 Min", xp:10 },
 
-  // Spaß – medium
-  { title:"Mini‑Rätsel lösen (Sudoku/KenKen)", cat:"Spaß", diff:"med", time:"5 Min", xp:15 },
+  // Spaß – MITTEL
+  { title:"Mini‑Rätsel lösen", detail:"Sudoku/KenKen/Wordle", cat:"Spaß", diff:"med", time:"5 Min", xp:15 },
 ];
 
 /* Utils */
@@ -112,7 +113,7 @@ function defaultState(){
     resetAt: nextResetMidnight().toISOString(),
     rerolledForDay: false, // 1×/Tag-Limit
     quests: generateDailyQuestsCategorized(),
-    totalDone: 0,         // NEU: Gesamt erledigte Aufgaben (persistent)
+    totalDone: 0,         // Gesamt erledigte Aufgaben (persistent)
   };
 }
 
@@ -180,7 +181,7 @@ function loadState(){
 }
 function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-/* DOM refs */
+/* DOM refs (defensiv) */
 const $xp = $("#xp");
 const $levelValue = $("#levelValue");
 const $levelCard = $("#levelCard");
@@ -192,29 +193,33 @@ const $reroll = $("#reroll");
 const $audioClick = $("#uiClick");
 const $xpFill = $("#xpFill");
 const $nextLevelInfo = $("#nextLevelInfo");
-const $totalDone = $("#totalDone"); // NEU
+const $totalDone = $("#totalDone");
+const $totalDoneChip = $("#totalDoneChip");
 
 /* Filter state */
 let currentFilter = "all";
 
 /* Render */
 function renderStatus(){
-  $xp.textContent = `${state.xp} XP`;
-  $levelValue.textContent = state.level;
+  if($xp) $xp.textContent = `${state.xp} XP`;
+  if($levelValue) $levelValue.textContent = state.level;
 
-  $xpFill.style.width = `${(state.xp/100)*100}%`;
-  $nextLevelInfo.textContent = `${state.xp}/100 XP bis Level ${state.level+1}`;
+  if($xpFill) $xpFill.style.width = `${(state.xp/100)*100}%`;
+  if($nextLevelInfo) $nextLevelInfo.textContent = `${state.xp}/100 XP bis Level ${state.level+1}`;
 
   const r = new Date(state.resetAt);
   const {h,m} = timeToHHMM(Math.max(0, r - now()));
-  $resetH.textContent = h; $resetM.textContent = m;
+  if($resetH) $resetH.textContent = h;
+  if($resetM) $resetM.textContent = m;
 
   const total = state.quests.length;
   const done = state.quests.filter(q=>q.done && q.claimed).length;
-  $tasksCount.textContent = `${done}/${total} abgeschlossen`;
+  if($tasksCount) $tasksCount.textContent = `${done}/${total} abgeschlossen`;
 
-  $reroll.disabled = !!state.rerolledForDay;
-  $reroll.title = state.rerolledForDay ? "Reroll bereits genutzt (morgen wieder)" : "Neue Fragen (1×/Tag)";
+  if($reroll){
+    $reroll.disabled = !!state.rerolledForDay;
+    $reroll.title = state.rerolledForDay ? "Reroll bereits genutzt (morgen wieder)" : "Neue Aufgaben (1×/Tag)";
+  }
 
   if($totalDone) $totalDone.textContent = `${state.totalDone} gesamt`;
 }
@@ -227,6 +232,7 @@ function taskRow(q){
   const dif = diffBadge(q.diff);
   const cat = `<span class="badge b-cat">#${q.cat}</span>`;
   const time = `<span class="badge b-cat">⏱ ${q.time}</span>`;
+  const info = q.detail ? `<span class="badge b-cat">ℹ️ ${q.detail}</span>` : "";
   const action = !q.done
     ? `<button class="btn" data-act="done" data-id="${q.id}">Erledigt</button>`
     : (!q.claimed
@@ -236,7 +242,7 @@ function taskRow(q){
     <div class="task ${q.done?"done":""}">
       <div>
         <div class="task-title">${q.title}</div>
-        <div class="task-sub">${dif}${cat}${time}</div>
+        <div class="task-sub">${dif}${cat}${time}${info}</div>
       </div>
       <div class="actions">${action}</div>
     </div>
@@ -249,56 +255,59 @@ function filteredQuests(){
 }
 function renderQuests(){
   const items = filteredQuests().map(taskRow).join("");
-  $questList.innerHTML = items || `<div class="muted small">Keine Aufgaben im aktuellen Filter.</div>`;
+  if($questList) $questList.innerHTML = items || `<div class="muted small">Keine Aufgaben im aktuellen Filter.</div>`;
 }
 function renderAll(){ renderStatus(); renderQuests(); }
 renderAll();
 
 /* Interaktionen: Tasks */
-$questList.addEventListener("click", (e)=>{
-  const btn = e.target.closest("button");
-  if(!btn) return;
-  const act = btn.dataset.act;
-  const id = btn.dataset.id;
-  const q = state.quests.find(x=>x.id===id);
-  if(!q) return;
+if($questList){
+  $questList.addEventListener("click", (e)=>{
+    const btn = e.target.closest("button");
+    if(!btn) return;
+    const act = btn.dataset.act;
+    const id = btn.dataset.id;
+    const q = state.quests.find(x=>x.id===id);
+    if(!q) return;
 
-  playClick();
-  if(act==="done"){
-    q.done = true;
-    toast(`Erledigt: ${q.title}`, "success");
-  }else if(act==="claim"){
-    if(!q.done || q.claimed) return;
-    q.claimed = true;
+    playClick();
+    if(act==="done"){
+      q.done = true;
+      toast(`Erledigt: ${q.title}`, "success");
+    }else if(act==="claim"){
+      if(!q.done || q.claimed) return;
+      q.claimed = true;
 
-    // NEU: Gesamtzähler hochzählen
-    state.totalDone = (state.totalDone || 0) + 1;
+      // Gesamtzähler hochzählen
+      state.totalDone = (state.totalDone || 0) + 1;
 
-    // Optional kleiner Pulse auf dem Chip
-    if($totalDone){
-      const chip = $totalDone.parentElement;
-      chip.classList.remove("pulse"); void chip.offsetWidth; chip.classList.add("pulse");
+      // Pulse-Animation auf dem Chip
+      if($totalDoneChip){
+        $totalDoneChip.classList.remove("pulse");
+        void $totalDoneChip.offsetWidth;
+        $totalDoneChip.classList.add("pulse");
+      }
+
+      const beforeLevel = state.level;
+      state.xp += q.xp;
+
+      // Level-Up Logik mit XP-Reset pro Level (100 XP pro Stufe)
+      while(state.xp >= 100){
+        state.xp -= 100;
+        state.level += 1;
+      }
+
+      celebrate();
+      toast(`+${q.xp} XP`, "success");
+
+      if(state.level > beforeLevel){
+        triggerLevelUpAnimation();
+        toast(`Level ${state.level} erreicht!`, "success");
+      }
     }
-
-    const beforeLevel = state.level;
-    state.xp += q.xp;
-
-    // Level-Up Logik mit XP-Reset pro Level (100 XP pro Stufe)
-    while(state.xp >= 100){
-      state.xp -= 100;
-      state.level += 1;
-    }
-
-    celebrate();
-    toast(`+${q.xp} XP`, "success");
-
-    if(state.level > beforeLevel){
-      triggerLevelUpAnimation();
-      toast(`Level ${state.level} erreicht!`, "success");
-    }
-  }
-  saveState(); renderAll();
-});
+    saveState(); renderAll();
+  });
+}
 
 /* Interaktionen: Filter */
 document.querySelectorAll(".filter-btn").forEach(b=>{
@@ -312,18 +321,20 @@ document.querySelectorAll(".filter-btn").forEach(b=>{
 });
 
 /* Reroll 1× pro Tag */
-$reroll.addEventListener("click", ()=>{
-  if(state.rerolledForDay){
-    toast("Reroll heute schon genutzt.", "warn");
+if($reroll){
+  $reroll.addEventListener("click", ()=>{
+    if(state.rerolledForDay){
+      toast("Reroll heute schon genutzt.", "warn");
+      playClick();
+      return;
+    }
     playClick();
-    return;
-  }
-  playClick();
-  state.quests = generateDailyQuestsCategorized();
-  state.rerolledForDay = true;
-  toast("Neue Aufgaben generiert.", "success");
-  saveState(); renderAll();
-});
+    state.quests = generateDailyQuestsCategorized();
+    state.rerolledForDay = true;
+    toast("Neue Aufgaben generiert.", "success");
+    saveState(); renderAll();
+  });
+}
 
 /* Reset & Timer */
 function checkReset(){
@@ -362,6 +373,7 @@ function playClick(){
 const canvas = document.getElementById("hoverParticles");
 const ctx = canvas.getContext("2d");
 function resizeCanvas(){
+  if(!canvas) return;
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
@@ -370,6 +382,7 @@ resizeCanvas();
 
 const particles = [];
 document.addEventListener("mousemove", (e)=>{
+  if(!canvas) return;
   for(let i=0;i<3;i++){
     particles.push({
       x:e.clientX, y:e.clientY,
@@ -380,6 +393,7 @@ document.addEventListener("mousemove", (e)=>{
   }
 });
 (function tick(){
+  if(!canvas) return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
   for(let i=particles.length-1;i>=0;i--){
     const p = particles[i];
